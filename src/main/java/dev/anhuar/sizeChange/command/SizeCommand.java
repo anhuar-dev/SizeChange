@@ -1,5 +1,7 @@
 package dev.anhuar.sizeChange.command;
 
+import dev.anhuar.sizeChange.SizeChange;
+
 /*
  * ========================================================
  * SizeChange - SizeCommand.java
@@ -14,4 +16,9 @@ package dev.anhuar.sizeChange.command;
  */
 public class SizeCommand {
 
+    private SizeChange plugin;
+
+    public SizeCommand(SizeChange plugin) {
+        this.plugin = plugin;
+    }
 }

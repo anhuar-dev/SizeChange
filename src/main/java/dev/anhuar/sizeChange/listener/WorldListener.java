@@ -1,5 +1,8 @@
 package dev.anhuar.sizeChange.listener;
 
+import dev.anhuar.sizeChange.SizeChange;
+import org.bukkit.event.Listener;
+
 /*
  * ========================================================
  * SizeChange - WorldListener.java
@@ -12,6 +15,12 @@ package dev.anhuar.sizeChange.listener;
  * Copyright (c) 2025 Anhuar Dev. All rights reserved.
  * ========================================================
  */
-public class WorldListener {
+public class WorldListener implements Listener {
+
+    private SizeChange plugin;
+
+    public WorldListener(SizeChange plugin) {
+        this.plugin = plugin;
+    }
 
 }

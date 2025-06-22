@@ -12,6 +12,13 @@ package dev.anhuar.sizeChange.data;
  * Copyright (c) 2025 Anhuar Dev. All rights reserved.
  * ========================================================
  */
+
+import lombok.Data;
+
+@Data
 public class DPlayer {
+
+    private String name;
+
 
 }
