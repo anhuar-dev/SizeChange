@@ -19,6 +19,6 @@ import lombok.Data;
 public class DPlayer {
 
     private String name;
-
+    private float size = 1.0f;
 
 }

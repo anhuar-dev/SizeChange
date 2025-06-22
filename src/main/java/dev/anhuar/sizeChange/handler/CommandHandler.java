@@ -14,7 +14,6 @@ package dev.anhuar.sizeChange.handler;
  */
 
 import dev.anhuar.sizeChange.SizeChange;
-import dev.anhuar.sizeChange.command.AdminCommand;
 import dev.anhuar.sizeChange.command.SizeCommand;
 import revxrsal.commands.bukkit.BukkitCommandHandler;
 
@@ -32,7 +31,6 @@ public class CommandHandler {
     }
 
     private void registerCommands() {
-        commandHandler.register(new AdminCommand(plugin));
         commandHandler.register(new SizeCommand(plugin));
     }
 }
