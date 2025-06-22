@@ -48,3 +48,5 @@ build/classes/java/main/dev/anhuar/sizeChange/handler/ListenerHandler.class
 build/classes/java/main/dev/anhuar/sizeChange/handler/CommandHandler.class
 build/classes/java/main/dev/anhuar/sizeChange/data/DPlayer.class
 build/classes/java/main/dev/anhuar/sizeChange/command/SizeCommand.class
+build/classes/java/main/dev/anhuar/sizeChange/task/RegionTask.class
+build/classes/java/main/dev/anhuar/sizeChange/task/RegionTask.class

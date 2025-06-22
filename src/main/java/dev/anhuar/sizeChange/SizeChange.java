@@ -37,7 +37,6 @@ public final class SizeChange extends JavaPlugin {
         managerHandler = new ManagerHandler(this);
         mongoHandler = new MongoHandler(this);
 
-
     }
 
     @Override
