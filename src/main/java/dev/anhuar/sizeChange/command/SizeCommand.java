@@ -4,6 +4,7 @@ import dev.anhuar.sizeChange.SizeChange;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import revxrsal.commands.annotation.AutoComplete;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
@@ -32,6 +33,7 @@ public class SizeCommand {
     }
 
     @Subcommand("size set")
+    @AutoComplete("@players")
     public void setSizeCommand(CommandSender sender, String playerName, float size) {
         Player target = Bukkit.getPlayer(playerName);
 
@@ -48,13 +50,14 @@ public class SizeCommand {
         boolean success = plugin.getManagerHandler().getSizeManager().setSize(target.getUniqueId(), size);
 
         if (success) {
-            sender.sendRichMessage(plugin.getMessage().getString("SUCCESS.SET-SIZE").replace("%size%", String.valueOf(size).replace("%player%", target.getName())));
+            sender.sendRichMessage(plugin.getMessage().getString("SUCCESS.SET-SIZE").replace("%size%", String.valueOf(size)).replace("%player%", target.getName()));
         } else {
             sender.sendRichMessage(plugin.getMessage().getString("ERROR.SET-SIZE-FAILED").replace("%player%", target.getName()));
         }
     }
 
     @Subcommand("size reset")
+    @AutoComplete("@players")
     public void resetSizeCommand(CommandSender sender, String playerName) {
         Player target = Bukkit.getPlayer(playerName);
 
@@ -73,9 +76,20 @@ public class SizeCommand {
     }
 
     @Subcommand("reload")
-    public void reloadCommand(CommandSender sender) {
-        plugin.getMessage().reload();
-        plugin.getSetting().reload();
-        sender.sendRichMessage("<green>SizeChange ha sido recargado correctamente!</green>");
+    @AutoComplete("setting|message")
+    public void reloadCommand(CommandSender sender, String subArg) {
+
+        switch (subArg.toLowerCase()) {
+            case "setting" -> {
+                plugin.getSetting().reload();
+                sender.sendRichMessage("<green>Configuración recargada correctamente!</green>");
+                return;
+            }
+            case "message" -> {
+                plugin.getMessage().reload();
+                sender.sendRichMessage("<green>Mensajes recargados correctamente!</green>");
+                return;
+            }
+        }
     }
 }

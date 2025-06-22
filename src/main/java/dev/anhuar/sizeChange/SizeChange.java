@@ -7,7 +7,6 @@ import dev.anhuar.sizeChange.handler.MongoHandler;
 import dev.anhuar.sizeChange.util.ConfigUtil;
 import lombok.Getter;
 import lombok.Setter;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
@@ -38,7 +37,6 @@ public final class SizeChange extends JavaPlugin {
         mongoHandler = new MongoHandler(this);
 
     }
-
 
     @Override
     public void onDisable() {

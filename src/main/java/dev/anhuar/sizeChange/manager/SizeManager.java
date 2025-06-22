@@ -16,10 +16,12 @@ package dev.anhuar.sizeChange.manager;
 import dev.anhuar.sizeChange.SizeChange;
 import dev.anhuar.sizeChange.data.DPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.UUID;
 
 public class SizeManager {
@@ -65,6 +67,19 @@ public class SizeManager {
             if (attributeInstance != null) {
                 attributeInstance.setBaseValue(size);
             }
+        }
+    }
+
+    public void handleWorldChange(Player player, World toWorld, World fromWorld) {
+        List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
+
+        float size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());
+
+        if (denyWorlds.contains(toWorld.getName())) {
+            plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), DEFAULT_SIZE);
+
+        } else if (denyWorlds.contains(fromWorld.getName())) {
+            plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), size);
         }
     }
 }

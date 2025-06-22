@@ -8,6 +8,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.List;
+
 /*
  * ========================================================
  * SizeChange - PlayerListener.java
@@ -37,7 +39,14 @@ public class PlayerListener implements Listener {
             plugin.getManagerHandler().getPlayerDataManager().load(player.getUniqueId());
         });
 
-        float size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());
+        List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
+        float size;
+
+        if (denyWorlds.contains(player.getWorld().getName())) {
+            size = 1.0f;
+        } else {
+            size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());
+        }
         plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), size);
     }
 

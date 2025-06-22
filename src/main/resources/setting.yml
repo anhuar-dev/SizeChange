@@ -1,4 +1,14 @@
 MONGO:
-  URI: "mongodb://localhost:27018"
+  URI: "mongodb://localhost:27017"
   DATABASE: "SizeChange"
   COLLECTION: "players"
+
+DENY-WORLD:
+  - "Conquest"
+
+DENY-REGION:
+  - "potzone"
+  - "kothpot"
+  - "crystalpvp"
+  - "crystalkoth"
+  - "mazopvp"
