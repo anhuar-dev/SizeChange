@@ -243,8 +243,6 @@ in the Software without restriction...
 
 **Anhuar Ruiz** - *Anhuar Dev | myclass*
 - Website: [anhuar.dev](https://anhuar.dev)
-- GitHub: [@anhuarruiz]([https://github.com/myclxss])
-
 ## 📈 Versiones
 
 ### v1.0 (Actual)
