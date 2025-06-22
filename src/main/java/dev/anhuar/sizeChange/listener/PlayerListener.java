@@ -37,17 +37,19 @@ public class PlayerListener implements Listener {
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             plugin.getManagerHandler().getPlayerDataManager().load(player.getUniqueId());
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
+                float size;
+
+                if (denyWorlds.contains(player.getWorld().getName())) {
+                    size = 1.0f;
+                } else {
+                    size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());
+                }
+                plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), size);
+            });
         });
-
-        List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
-        float size;
-
-        if (denyWorlds.contains(player.getWorld().getName())) {
-            size = 1.0f;
-        } else {
-            size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());
-        }
-        plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), size);
     }
 
     @EventHandler

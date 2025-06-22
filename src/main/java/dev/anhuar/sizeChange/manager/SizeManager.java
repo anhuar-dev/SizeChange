@@ -73,15 +73,15 @@ public class SizeManager {
 
     public void handleWorldChange(Player player, World toWorld, World fromWorld) {
 
-        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+            return;
+        }
 
         List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
-
         float size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());
 
         if (denyWorlds.contains(toWorld.getName())) {
             plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), DEFAULT_SIZE);
-
         } else if (denyWorlds.contains(fromWorld.getName())) {
             plugin.getManagerHandler().getSizeManager().applySize(player.getUniqueId(), size);
         }

@@ -2,6 +2,7 @@ package dev.anhuar.sizeChange.listener;
 
 import dev.anhuar.sizeChange.SizeChange;
 import jdk.jfr.Enabled;
+import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -32,6 +33,10 @@ public class WorldListener implements Listener {
     @EventHandler
     public void onWorldChange(PlayerChangedWorldEvent event) {
         Player player = event.getPlayer();
+
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) {
+            return;
+        }
 
         World fromWorld = event.getFrom();
         World toWorld = player.getWorld();
