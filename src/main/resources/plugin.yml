@@ -1,0 +1,7 @@
+name: SizeChange
+version: '1.0-SNAPSHOT'
+main: dev.anhuar.sizeChange.SizeChange
+api-version: '1.21'
+authors: [ anhuar dev, anhuar ruiz, myclass ]
+description: Cosmetic plugin to resize the player
+website: https://anhuar.dev
