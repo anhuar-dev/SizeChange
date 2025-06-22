@@ -54,6 +54,9 @@ public class PlayerListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         plugin.getManagerHandler().getPlayerDataManager().save(player.getUniqueId());
-    }
 
+        if (plugin.getListenerHandler().getRegionTask() != null) {
+            plugin.getListenerHandler().getRegionTask().removePlayer(player.getUniqueId());
+        }
+    }
 }

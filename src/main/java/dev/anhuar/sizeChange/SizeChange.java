@@ -4,6 +4,7 @@ import dev.anhuar.sizeChange.handler.CommandHandler;
 import dev.anhuar.sizeChange.handler.ListenerHandler;
 import dev.anhuar.sizeChange.handler.ManagerHandler;
 import dev.anhuar.sizeChange.handler.MongoHandler;
+import dev.anhuar.sizeChange.task.RegionTask;
 import dev.anhuar.sizeChange.util.ConfigUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +36,7 @@ public final class SizeChange extends JavaPlugin {
         listenerHandler = new ListenerHandler(this);
         managerHandler = new ManagerHandler(this);
         mongoHandler = new MongoHandler(this);
+
 
     }
 

@@ -16,6 +16,7 @@ package dev.anhuar.sizeChange.manager;
 import dev.anhuar.sizeChange.SizeChange;
 import dev.anhuar.sizeChange.data.DPlayer;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -71,6 +72,9 @@ public class SizeManager {
     }
 
     public void handleWorldChange(Player player, World toWorld, World fromWorld) {
+
+        if (player.getGameMode() == GameMode.CREATIVE || player.getGameMode() == GameMode.SPECTATOR) return;
+
         List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
 
         float size = plugin.getManagerHandler().getSizeManager().getSize(player.getUniqueId());

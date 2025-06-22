@@ -76,7 +76,7 @@ public class SizeCommand {
     }
 
     @Subcommand("reload")
-    @AutoComplete("setting|message")
+    @AutoComplete("setting|message|regioncache")
     public void reloadCommand(CommandSender sender, String subArg) {
 
         switch (subArg.toLowerCase()) {
@@ -88,6 +88,13 @@ public class SizeCommand {
             case "message" -> {
                 plugin.getMessage().reload();
                 sender.sendRichMessage("<green>Mensajes recargados correctamente!</green>");
+                return;
+            }
+            case "regioncache" -> {
+                if (plugin.getListenerHandler().getRegionTask() != null) {
+                    plugin.getListenerHandler().getRegionTask().forceUpdateCache();
+                }
+                sender.sendRichMessage("<green>Regiones denegadas recargadas correctamente!</green>");
                 return;
             }
         }

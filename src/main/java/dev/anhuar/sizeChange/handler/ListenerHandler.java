@@ -16,6 +16,8 @@ package dev.anhuar.sizeChange.handler;
 import dev.anhuar.sizeChange.SizeChange;
 import dev.anhuar.sizeChange.listener.PlayerListener;
 import dev.anhuar.sizeChange.listener.WorldListener;
+import dev.anhuar.sizeChange.task.RegionTask;
+import lombok.Getter;
 import org.bukkit.event.Listener;
 
 import java.util.Arrays;
@@ -25,9 +27,13 @@ public class ListenerHandler {
 
     private final SizeChange plugin;
 
+    @Getter
+    private RegionTask regionTask;
+
     public ListenerHandler(SizeChange plugin) {
         this.plugin = plugin;
         registerListeners();
+        startTasks();
     }
 
     private void registerListeners() {
@@ -39,5 +45,10 @@ public class ListenerHandler {
         for (Listener listener : listeners) {
             plugin.getServer().getPluginManager().registerEvents(listener, plugin);
         }
+    }
+
+    private void startTasks() {
+        this.regionTask = new RegionTask(plugin);
+        regionTask.runTaskTimer(plugin, 20, 10);
     }
 }
