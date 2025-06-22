@@ -1,0 +1,4 @@
+MONGO:
+  URI: "mongodb://localhost:27018"
+  DATABASE: "SizeChange"
+  COLLECTION: "players"

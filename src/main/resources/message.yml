@@ -1,0 +1,9 @@
+ERROR:
+  OFFLINE: "<red>Jugador no encontrado. El jugador debe estar conectado.</red>"
+  INVALID-SIZE: "<red>El tamaño debe estar entre 0.1 y 10.</red>"
+  SET-SIZE-FAILED: "<red>No se pudo establecer el tamaño para %player%.</red>"
+  RESET-SIZE-FAILED: "<red>No se pudo restablecer el tamaño para %player%.</red>"
+
+SUCCESS:
+  SET-SIZE: "<green>Tamaño de %player% establecido a %size% </green>"
+  RESET-SIZE: "<green>Tamaño de %player% restablecido al valor predeterminado.</green>"

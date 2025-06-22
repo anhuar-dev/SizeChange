@@ -36,21 +36,21 @@ public class SizeCommand {
         Player target = Bukkit.getPlayer(playerName);
 
         if (target == null) {
-            sender.sendRichMessage("<red>Jugador no encontrado. El jugador debe estar conectado.</red>");
+            sender.sendRichMessage(plugin.getMessage().getString("ERROR.OFFLINE"));
             return;
         }
 
         if (size <= 0 || size > 10) {
-            sender.sendRichMessage("<red>El tamaño debe estar entre 0.1 y 10.</red>");
+            sender.sendRichMessage(plugin.getMessage().getString("ERROR.INVALID-SIZE"));
             return;
         }
 
         boolean success = plugin.getManagerHandler().getSizeManager().setSize(target.getUniqueId(), size);
 
         if (success) {
-            sender.sendRichMessage("<green>Tamaño de " + playerName + " establecido a " + size + ".</green>");
+            sender.sendRichMessage(plugin.getMessage().getString("SUCCESS.SET-SIZE").replace("%size%", String.valueOf(size).replace("%player%", target.getName())));
         } else {
-            sender.sendRichMessage("<red>No se pudo establecer el tamaño para " + playerName + ".</red>");
+            sender.sendRichMessage(plugin.getMessage().getString("ERROR.SET-SIZE-FAILED").replace("%player%", target.getName()));
         }
     }
 
@@ -59,16 +59,16 @@ public class SizeCommand {
         Player target = Bukkit.getPlayer(playerName);
 
         if (target == null) {
-            sender.sendRichMessage("<red>Jugador no encontrado. El jugador debe estar conectado.</red>");
+            sender.sendRichMessage(plugin.getMessage().getString("ERROR.OFFLINE"));
             return;
         }
 
         boolean success = plugin.getManagerHandler().getSizeManager().resetSize(target.getUniqueId());
 
         if (success) {
-            sender.sendRichMessage("<green>Tamaño de " + playerName + " restablecido al valor predeterminado.</green>");
+            sender.sendRichMessage(plugin.getMessage().getString("SUCCESS.RESET-SIZE").replace("%player%", target.getName()));
         } else {
-            sender.sendRichMessage("<red>No se pudo restablecer el tamaño para " + playerName + ".</red>");
+            sender.sendRichMessage(plugin.getMessage().getString("ERROR.RESET-SIZE-FAILED").replace("%player%", target.getName()));
         }
     }
 
