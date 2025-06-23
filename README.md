@@ -14,6 +14,7 @@ SizeChange es un plugin de Minecraft desarrollado para servidores Paper 1.21.3+ 
 ## 📋 Download:
 - Modrinth: [Link](https://modrinth.com/plugin/sizechange-regions-and-world)
 - Polymart: [Link](https://polymart.org/product/7993/sizechange-regions-and-world)
+- Builtbybit: [Link](https://builtbybit.com/resources/sizechange-player-cosmetic.69669/)
 
 ## ✨ Características
 
