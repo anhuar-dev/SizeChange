@@ -12,3 +12,7 @@ DENY-REGION:
   - "crystalpvp"
   - "crystalkoth"
   - "mazopvp"
+
+DENY-COMMAND:
+  - "tamaño"
+  - "size"

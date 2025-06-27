@@ -47,6 +47,5 @@ public class WorldListener implements Listener {
                 plugin.getManagerHandler().getSizeManager().handleWorldChange(player, toWorld, fromWorld);
             }
         }.runTaskLater(plugin, 20);
-
     }
 }
