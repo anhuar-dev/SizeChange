@@ -14,7 +14,7 @@ package dev.anhuar.sizeChange.manager;
  */
 
 import dev.anhuar.sizeChange.SizeChange;
-import dev.anhuar.sizeChange.data.DPlayer;
+import dev.anhuar.sizeChange.database.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
@@ -35,12 +35,11 @@ public class SizeManager {
     }
 
     public boolean setSize(UUID uuid, float size) {
-        DPlayer playerData = plugin.getManagerHandler().getPlayerDataManager().getPlayerDataMap().get(uuid);
+        PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(uuid);
 
         if (playerData == null) return false;
 
         playerData.setSize(size);
-        plugin.getManagerHandler().getPlayerDataManager().save(uuid);
 
         applySize(uuid, size);
 
@@ -52,9 +51,7 @@ public class SizeManager {
     }
 
     public float getSize(UUID uuid) {
-        DPlayer playerData = plugin.getManagerHandler().getPlayerDataManager().getPlayerDataMap().get(uuid);
-
-        if (playerData == null) return DEFAULT_SIZE;
+        PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(uuid);
 
         return playerData.getSize();
     }

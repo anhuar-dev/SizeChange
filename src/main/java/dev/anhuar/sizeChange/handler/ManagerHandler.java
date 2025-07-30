@@ -14,7 +14,6 @@ package dev.anhuar.sizeChange.handler;
  */
 
 import dev.anhuar.sizeChange.SizeChange;
-import dev.anhuar.sizeChange.manager.PlayerDataManager;
 import dev.anhuar.sizeChange.manager.SizeManager;
 import lombok.Getter;
 
@@ -23,7 +22,6 @@ public class ManagerHandler {
 
     private final SizeChange plugin;
 
-    private PlayerDataManager playerDataManager;
     private SizeManager sizeManager;
 
     public ManagerHandler(SizeChange plugin) {
@@ -32,7 +30,6 @@ public class ManagerHandler {
     }
 
     public void registerManager() {
-        this.playerDataManager = new PlayerDataManager();
         this.sizeManager = new SizeManager(plugin);
     }
 }
