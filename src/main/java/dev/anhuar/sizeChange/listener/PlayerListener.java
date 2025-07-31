@@ -42,12 +42,13 @@ public class PlayerListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(player.getUniqueId());
-            if (getPlugin().getPlayerDataManager().getPlayerDataStorage() != null) {
-                plugin.getPlayerDataManager().getPlayerDataStorage().loadData(playerData);
-            }
+        PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(player.getUniqueId());
 
+        if (plugin.getPlayerDataManager().isConnected()) {
+            plugin.getPlayerDataManager().getPlayerDataStorage().loadData(playerData);
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
                 float size;
@@ -71,12 +72,11 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(player.getUniqueId());
 
-        plugin.getPlayerDataManager().getPlayerDataStorage().saveData(playerData);
-        plugin.getPlayerDataManager().removeFromData(player.getUniqueId());
-
-        if (plugin.getListenerHandler().getRegionTask() != null) {
-            plugin.getListenerHandler().getRegionTask().removePlayer(player.getUniqueId());
+        if (plugin.getPlayerDataManager().isConnected()) {
+            plugin.getPlayerDataManager().getPlayerDataStorage().saveData(playerData);
         }
+
+        plugin.getPlayerDataManager().removeFromData(player.getUniqueId());
     }
 
     @EventHandler

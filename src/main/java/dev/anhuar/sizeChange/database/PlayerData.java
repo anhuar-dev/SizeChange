@@ -22,6 +22,7 @@ public class PlayerData {
 
     private final UUID uuid;
     private String displayName;
+    private float size = 1.0f;
 
     public PlayerData(SizeChange plugin, UUID uuid) {
         this.plugin = plugin;
@@ -30,11 +31,19 @@ public class PlayerData {
 
     // Getters
     public float getSize() {
-        return SizeChange.getInstance().getPlayerDataManager().getPlayerDataStorage().getSize(this);
+        PlayerDataStorage storage = SizeChange.getInstance().getPlayerDataManager().getPlayerDataStorage();
+        if (storage != null) {
+            return storage.getSize(this);
+        }
+        return this.size;
     }
 
     // Setters
     public void setSize(float amount) {
-        SizeChange.getInstance().getPlayerDataManager().getPlayerDataStorage().setSize(this, amount);
+        PlayerDataStorage storage = SizeChange.getInstance().getPlayerDataManager().getPlayerDataStorage();
+        if (storage != null) {
+            storage.setSize(this, amount);
+        }
+        this.size = amount;
     }
 }

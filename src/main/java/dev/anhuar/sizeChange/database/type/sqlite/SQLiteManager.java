@@ -129,8 +129,8 @@ public class SQLiteManager implements PlayerDataStorage {
             try (PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setString(1, playerData.getUuid().toString());
                 ResultSet rs = stmt.executeQuery();
-                playerData.setDisplayName(rs.getString("displayName"));
                 if (rs.next()) {
+                    playerData.setDisplayName(rs.getString("displayName"));
                     playerData.setSize(rs.getFloat("size"));
                 }
             }
