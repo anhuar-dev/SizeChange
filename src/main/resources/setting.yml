@@ -1,7 +1,18 @@
-MONGO:
-  URI: "mongodb://localhost:27017"
-  DATABASE: "SizeChange"
-  COLLECTION: "players"
+DATABASE:
+  ENABLED: true
+  TYPE: "SQLITE"
+  MYSQL:
+    HOST: "localhost"
+    PORT: 3306
+    DATABASE: "nombre_base_de_datos"
+    USERNAME: "usuario"
+    PASSWORD: "contraseña"
+  SQLITE:
+    FILE: "database.db"
+  MONGO:
+    URI: "mongodb://localhost:27017"
+    DATABASE: "SizeChange"
+    COLLECTION: "players"
 
 DENY-WORLD:
   - "Conquest"

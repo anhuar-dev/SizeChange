@@ -6,6 +6,7 @@ import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import com.sk89q.worldguard.protection.regions.RegionQuery;
 import dev.anhuar.sizeChange.SizeChange;
+import dev.anhuar.sizeChange.database.PlayerData;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -41,9 +42,13 @@ public class PlayerListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.getManagerHandler().getPlayerDataManager().load(player.getUniqueId());
+        PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(player.getUniqueId());
 
+        if (plugin.getPlayerDataManager().isConnected()) {
+            plugin.getPlayerDataManager().getPlayerDataStorage().loadData(playerData);
+        }
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 List<String> denyWorlds = plugin.getSetting().getConfig().getStringList("DENY-WORLD");
                 float size;
@@ -58,14 +63,20 @@ public class PlayerListener implements Listener {
         });
     }
 
+    private SizeChange getPlugin() {
+        return plugin;
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        plugin.getManagerHandler().getPlayerDataManager().save(player.getUniqueId());
+        PlayerData playerData = plugin.getPlayerDataManager().getOrCreate(player.getUniqueId());
 
-        if (plugin.getListenerHandler().getRegionTask() != null) {
-            plugin.getListenerHandler().getRegionTask().removePlayer(player.getUniqueId());
+        if (plugin.getPlayerDataManager().isConnected()) {
+            plugin.getPlayerDataManager().getPlayerDataStorage().saveData(playerData);
         }
+
+        plugin.getPlayerDataManager().removeFromData(player.getUniqueId());
     }
 
     @EventHandler
