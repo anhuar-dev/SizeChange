@@ -48,10 +48,21 @@ SizeChange es un plugin de Minecraft desarrollado para servidores Paper 1.21.3+ 
 ### setting.yml
 
 ```yaml
-MONGO:
-  URI: "mongodb://localhost:27017"
-  DATABASE: "SizeChange"
-  COLLECTION: "players"
+DATABASE:
+  ENABLED: true
+  TYPE: "SQLITE"
+  MYSQL:
+    HOST: "localhost"
+    PORT: 3306
+    DATABASE: "nombre_base_de_datos"
+    USERNAME: "usuario"
+    PASSWORD: "contraseña"
+  SQLITE:
+    FILE: "database.db"
+  MONGO:
+    URI: "mongodb://localhost:27017"
+    DATABASE: "SizeChange"
+    COLLECTION: "players"
 
 # Mundos donde el tamaño se restablece a 1.0
 DENY-WORLD:
@@ -123,18 +134,19 @@ dev.anhuar.sizeChange/
 ├── SizeChange.java              # Clase principal
 ├── command/
 │   └── SizeCommand.java         # Comandos del plugin
-├── data/
-│   └── DPlayer.java             # Modelo de datos del jugador
+├── database/
+│   └── DataType
+│   └── PlayerData
+│   └── PlayerDataManager.java   # Gestión de datos
+│   └── PlayerDataStorage
 ├── handler/
 │   ├── CommandHandler.java      # Gestor de comandos
 │   ├── ListenerHandler.java     # Gestor de eventos
 │   ├── ManagerHandler.java      # Gestor de managers
-│   └── MongoHandler.java        # Conexión MongoDB
 ├── listener/
 │   ├── PlayerListener.java      # Eventos de jugador
 │   └── WorldListener.java       # Eventos de mundo
 ├── manager/
-│   ├── PlayerDataManager.java   # Gestión de datos
 │   └── SizeManager.java         # Gestión de tamaños
 ├── task/
 │   └── RegionTask.java          # Tarea de regiones
