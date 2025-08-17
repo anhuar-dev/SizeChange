@@ -1,6 +1,6 @@
 plugins {
     `java-library`
-    id("io.papermc.paperweight.userdev") version "1.7.2"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.17"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
@@ -24,8 +24,7 @@ repositories {
 }
 
 dependencies {
-    paperweight.paperDevBundle("1.21.3-R0.1-SNAPSHOT")
-    compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
+    paperweight.paperDevBundle("1.21.4-R0.1-SNAPSHOT")
     compileOnly("org.projectlombok:lombok:1.18.34")
     annotationProcessor("org.projectlombok:lombok:1.18.34")
     compileOnly("me.clip:placeholderapi:2.11.6")
