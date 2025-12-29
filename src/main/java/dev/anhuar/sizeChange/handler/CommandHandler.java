@@ -27,7 +27,7 @@ public class CommandHandler {
         this.commandHandler = BukkitCommandHandler.create(plugin);
         commandHandler.registerDependency(SizeChange.class, plugin);
 
-        registerCommands();
+        registerCommands(); 
     }
 
     private void registerCommands() {
