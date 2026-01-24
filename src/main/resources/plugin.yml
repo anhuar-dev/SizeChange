@@ -1,5 +1,5 @@
 name: SizeChange
-version: '1.0-SNAPSHOT'
+version: '1.0.2.1-SNAPSHOT'
 main: dev.anhuar.sizeChange.SizeChange
 api-version: '1.21'
 authors: [ anhuar dev, anhuar ruiz, myclass ]

@@ -63,8 +63,8 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         plugin.getManagerHandler().getPlayerDataManager().save(player.getUniqueId());
 
-        if (plugin.getListenerHandler().getRegionTask() != null) {
-            plugin.getListenerHandler().getRegionTask().removePlayer(player.getUniqueId());
+        if (plugin.getRegionTask() != null) {
+            plugin.getRegionTask().removePlayer(player.getUniqueId());
         }
     }
 

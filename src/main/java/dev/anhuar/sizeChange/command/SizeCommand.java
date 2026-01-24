@@ -91,8 +91,8 @@ public class SizeCommand {
                 return;
             }
             case "regioncache" -> {
-                if (plugin.getListenerHandler().getRegionTask() != null) {
-                    plugin.getListenerHandler().getRegionTask().forceUpdateCache();
+                if (plugin.getRegionTask() != null) {
+                    plugin.getRegionTask().forceUpdateCache();
                 }
                 sender.sendRichMessage("<green>Regiones denegadas recargadas correctamente!</green>");
                 return;

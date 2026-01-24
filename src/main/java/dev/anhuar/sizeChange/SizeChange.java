@@ -23,6 +23,7 @@ public final class SizeChange extends JavaPlugin {
     private ListenerHandler listenerHandler;
     private ManagerHandler managerHandler;
     private MongoHandler mongoHandler;
+    private RegionTask regionTask;
 
     @Override
     public void onEnable() {
@@ -37,10 +38,16 @@ public final class SizeChange extends JavaPlugin {
         managerHandler = new ManagerHandler(this);
         mongoHandler = new MongoHandler(this);
 
+        regionTask = new RegionTask(this);
+        regionTask.runTaskTimer(this, 0L, 20L);
+
     }
 
     @Override
     public void onDisable() {
+        if (this.regionTask != null) {
+            this.regionTask.cancel();
+        }
         if (this.mongoHandler != null) {
             this.mongoHandler.close();
         }

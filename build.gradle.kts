@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "dev.anhuar"
-version = "v1.0.2"
+version = "v1.0.2.1"
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
