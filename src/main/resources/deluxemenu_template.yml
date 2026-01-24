@@ -1,0 +1,88 @@
+open_command: size
+
+size: 27
+menu_title: 'The menu created in deluxemenus'
+items:
+  '01':
+    material: LIME_DYE
+    slot: 10
+    display_name: "&aChange your size to 0.1"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x0.1"
+    - "[console] sizechange size set %player_name% 0.1"
+    - "[close]"
+  '02':
+    material: LIME_DYE
+    slot: 11
+    display_name: "&aChange your size to 0.5"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x0.5"
+    - "[console] sizechange size set %player_name% 0.5"
+    - "[close]"
+  '03':
+    material: LIME_DYE
+    slot: 12
+    display_name: "&aChange your size to 1"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x1"
+    - "[console] sizechange size set %player_name% 1"
+    - "[close]"
+  '04':
+    material: LIME_DYE
+    slot: 13
+    display_name: "&aChange your size to 1.5"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x1.5"
+    - "[console] sizechange size set %player_name% 1.5"
+    - "[close]"
+  '05':
+    material: LIME_DYE
+    slot: 14
+    display_name: "&aChange your size to 2"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x2"
+    - "[console] sizechange size set %player_name% 2"
+    - "[close]"
+  '06':
+    material: LIME_DYE
+    slot: 15
+    display_name: "&aChange your size to 5"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x5"
+    - "[console] sizechange size set %player_name% 5"
+    - "[close]"
+  '08':
+    material: LIME_DYE
+    slot: 16
+    display_name: "&aChange your size to 10"
+    lore:
+      - "&aClick to change size"
+    click_commands:
+    - "[message] &aYou changed your size to x10"
+    - "[console] sizechange size set %player_name% 10"
+    - "[close]"
+
+  '09':
+    material: RED_DYE
+    slot: 22
+    display_name: "&cReset your size to default"
+    lore:
+      - "&aClick to reset size"
+    click_commands:
+    - "[message] &cYou reset your size to default"
+    - "[console] sizechange size reset %player_name%"
+    - "[close]"
+
+sweet: true

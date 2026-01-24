@@ -1,18 +1,18 @@
+# Database connection settings for storing player data / Configuración de conexión a la base de datos para almacenar datos de jugadores
 MONGO:
   URI: "mongodb://localhost:27017"
   DATABASE: "SizeChange"
   COLLECTION: "players"
 
+# Worlds where size changes are prohibited and players will be at default size / Mundos donde el cambio de tamaño está prohibido y los jugadores estarán en tamaño predeterminado
 DENY-WORLD:
   - "Conquest"
 
+# Regions where size changes are prohibited and players will be at default size / Regiones donde el cambio de tamaño está prohibido y los jugadores estarán en tamaño predeterminado
 DENY-REGION:
-  - "potzone"
-  - "kothpot"
-  - "crystalpvp"
-  - "crystalkoth"
-  - "mazopvp"
+  - "pvpzone"
+  - "lobby"
 
+# List of commands that are denied in restricted areas / Lista de comandos que están denegados en áreas restringidas
 DENY-COMMAND:
-  - "tamaño"
   - "size"
