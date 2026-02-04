@@ -2058,3 +2058,11 @@ build/tmp/.cache/expanded/zip_cf550b9691c1dfa9597892157d4ae435/com/mongodb/clien
 build/libs/SizeChange-v1.0.2.1.jar
 build/libs/SizeChange-v1.0.2.1-dev.jar
 build/libs/SizeChange-v1.0.2.1-dev-all.jar
+.gradle/9.0.0/executionHistory/executionHistory.bin
+.gradle/9.0.0/executionHistory/executionHistory.lock
+.gradle/9.0.0/expanded/expanded.lock
+.gradle/9.0.0/fileHashes/resourceHashesCache.bin
+.idea/copilot.data.migration.agent.xml
+.idea/copilot.data.migration.ask2agent.xml
+.idea/copilot.data.migration.edit.xml
+build/resources/main/deluxemenu_template.yml

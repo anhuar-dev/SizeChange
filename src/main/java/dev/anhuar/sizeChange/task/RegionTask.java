@@ -11,6 +11,7 @@ import dev.anhuar.sizeChange.SizeChange;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -21,12 +22,14 @@ public class RegionTask extends BukkitRunnable {
 
     private final SizeChange plugin;
     private final Map<UUID, Boolean> playerInDenyRegion = new ConcurrentHashMap<>();
+    private final Map<UUID, String> playerInSizeRegion = new ConcurrentHashMap<>();
 
     private final Set<String> relevantWorlds = new HashSet<>();
     private long lastCacheUpdate = 0;
     private static final long CACHE_UPDATE_INTERVAL = 30000;
 
     private List<String> denyRegions;
+    private Map<String, Float> sizeRegions;
 
     public RegionTask(SizeChange plugin) {
         this.plugin = plugin;
@@ -36,7 +39,16 @@ public class RegionTask extends BukkitRunnable {
     private void updateRegionCache() {
         denyRegions = plugin.getSetting().getConfig().getStringList("DENY-REGION");
 
-        if (denyRegions.isEmpty()) {
+        sizeRegions = new HashMap<>();
+        ConfigurationSection sizeRegionSection = plugin.getSetting().getConfig().getConfigurationSection("SIZE-REGION");
+        if (sizeRegionSection != null) {
+            for (String regionName : sizeRegionSection.getKeys(false)) {
+                double size = sizeRegionSection.getDouble(regionName);
+                sizeRegions.put(regionName, (float) size);
+            }
+        }
+
+        if (denyRegions.isEmpty() && sizeRegions.isEmpty()) {
             relevantWorlds.clear();
             return;
         }
@@ -54,6 +66,13 @@ public class RegionTask extends BukkitRunnable {
                     break;
                 }
             }
+
+            for (String regionId : sizeRegions.keySet()) {
+                if (regionManager.hasRegion(regionId)) {
+                    relevantWorlds.add(world.getName());
+                    break;
+                }
+            }
         }
 
         lastCacheUpdate = System.currentTimeMillis();
@@ -65,7 +84,7 @@ public class RegionTask extends BukkitRunnable {
             updateRegionCache();
         }
 
-        if (denyRegions.isEmpty()) return;
+        if (denyRegions.isEmpty() && sizeRegions.isEmpty()) return;
 
         RegionContainer container = WorldGuard.getInstance().getPlatform().getRegionContainer();
         RegionQuery query = container.createQuery();
@@ -94,6 +113,7 @@ public class RegionTask extends BukkitRunnable {
 
             if (inDenyRegion && (wasInDenyRegion == null || !wasInDenyRegion)) {
                 playerInDenyRegion.put(uuid, true);
+                playerInSizeRegion.remove(uuid);
                 float DEFAULT_SIZE = 1.0f;
                 plugin.getManagerHandler().getSizeManager().applySize(uuid, DEFAULT_SIZE);
             } else if (!inDenyRegion && Boolean.TRUE.equals(wasInDenyRegion)) {
@@ -101,11 +121,37 @@ public class RegionTask extends BukkitRunnable {
                 float originalSize = plugin.getManagerHandler().getSizeManager().getSize(uuid);
                 plugin.getManagerHandler().getSizeManager().applySize(uuid, originalSize);
             }
+
+            if (!inDenyRegion) {
+                String currentSizeRegion = null;
+                Float regionSize = null;
+
+                for (ProtectedRegion region : regions) {
+                    if (sizeRegions.containsKey(region.getId())) {
+                        currentSizeRegion = region.getId();
+                        regionSize = sizeRegions.get(region.getId());
+                        break;
+                    }
+                }
+
+                String previousSizeRegion = playerInSizeRegion.get(uuid);
+
+                if (currentSizeRegion != null && !currentSizeRegion.equals(previousSizeRegion)) {
+                    playerInSizeRegion.put(uuid, currentSizeRegion);
+                    plugin.getManagerHandler().getSizeManager().applySize(uuid, regionSize);
+                }
+                else if (currentSizeRegion == null && previousSizeRegion != null) {
+                    playerInSizeRegion.remove(uuid);
+                    float originalSize = plugin.getManagerHandler().getSizeManager().getSize(uuid);
+                    plugin.getManagerHandler().getSizeManager().applySize(uuid, originalSize);
+                }
+            }
         }
     }
 
     public void removePlayer(UUID uuid) {
         playerInDenyRegion.remove(uuid);
+        playerInSizeRegion.remove(uuid);
     }
 
     public void forceUpdateCache() {

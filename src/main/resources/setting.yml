@@ -1,18 +1,29 @@
-# Database connection settings for storing player data / Configuración de conexión a la base de datos para almacenar datos de jugadores
+# Database connection settings for storing player data
+# Configuración de conexión a la base de datos para almacenar datos de jugadores
 MONGO:
   URI: "mongodb://localhost:27017"
   DATABASE: "SizeChange"
   COLLECTION: "players"
 
-# Worlds where size changes are prohibited and players will be at default size / Mundos donde el cambio de tamaño está prohibido y los jugadores estarán en tamaño predeterminado
+# Worlds where size changes are prohibited and players will be at default size
+# Mundos donde el cambio de tamaño está prohibido y los jugadores estarán en tamaño predeterminado
 DENY-WORLD:
   - "Conquest"
 
-# Regions where size changes are prohibited and players will be at default size / Regiones donde el cambio de tamaño está prohibido y los jugadores estarán en tamaño predeterminado
+# Regions where size changes are prohibited and players will be at default size
+# Regiones donde el cambio de tamaño está prohibido y los jugadores estarán en tamaño predeterminado
 DENY-REGION:
   - "pvpzone"
   - "lobby"
 
-# List of commands that are denied in restricted areas / Lista de comandos que están denegados en áreas restringidas
+# List of commands that are denied in restricted areas
+# Lista de comandos que están denegados en áreas restringidas
 DENY-COMMAND:
   - "size"
+
+# When players enter these regions, they will be automatically resized to the configured size
+# Cuando los jugadores entren a estas regiones, se les cambiará el tamaño automáticamente al configurado
+SIZE-REGION:
+  papu: 0.1
+  gigante: 2.5
+  mini: 0.5
