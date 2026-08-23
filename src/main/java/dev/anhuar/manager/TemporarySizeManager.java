@@ -33,23 +33,26 @@ public class TemporarySizeManager {
         startExpirationCheck();
     }
 
-    public void setTemporarySize(Player player, double tempSize, long durationMillis) {
+    public void setTemporarySize(Player player, double tempSize, long durationMillis, boolean animate) {
         double originalSize = plugin.getManagerHandler().getSizeManager().getSize(player);
-        applyTemporarySize(player, tempSize, originalSize, durationMillis);
+        applyTemporarySize(player, tempSize, originalSize, durationMillis, animate);
     }
 
     // IMPORTANT: use this overload whenever the player's current visual size does
     // NOT reflect their real original size — e.g. right after joining (visual size
     // is still the default, the real value is only in the DB record being
     // restored) or right after leaving a WorldGuard region (visual size is the
-    // region override, not what they had before entering). The 3-arg overload
+    // region override, not what they had before entering). The other overload
     // above reads the live visual size instead, which is only correct when the
     // player's current size already IS their real size.
-    public void setTemporarySize(Player player, double tempSize, double originalSize, long durationMillis) {
-        applyTemporarySize(player, tempSize, originalSize, durationMillis);
+    public void setTemporarySize(Player player, double tempSize, double originalSize, long durationMillis, boolean animate) {
+        applyTemporarySize(player, tempSize, originalSize, durationMillis, animate);
     }
 
-    private void applyTemporarySize(Player player, double tempSize, double originalSize, long durationMillis) {
+    // IMPORTANT: animate is true only for the direct /sizechange temporary set
+    // command — never for the region re-application in DenyRegionHandler, which
+    // can fire far more often than a player types a command.
+    private void applyTemporarySize(Player player, double tempSize, double originalSize, long durationMillis, boolean animate) {
         UUID uuid = player.getUniqueId();
         SizeManager sizeManager = plugin.getManagerHandler().getSizeManager();
 
@@ -63,10 +66,14 @@ public class TemporarySizeManager {
         // is still recorded and counting down, it only becomes visible once the
         // player leaves the region (onCrossBoundary's exit branch applies it then).
         if (!DenyRegionHandler.hasVisualOverride(uuid)) {
-            sizeManager.setSize(player, tempSize);
+            if (animate) {
+                plugin.getManagerHandler().getSizeAnimator().animateTo(player, tempSize);
+            } else {
+                sizeManager.setSize(player, tempSize);
+            }
         }
 
-        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> restoreSize(uuid), durationMillis / 50);
+        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> restoreSize(uuid, false), durationMillis / 50);
         activeTasks.put(uuid, task);
     }
 
@@ -78,11 +85,14 @@ public class TemporarySizeManager {
         temporarySizes.remove(uuid);
     }
 
+    // IMPORTANT: animate is true only for the direct /sizechange temporary clear
+    // command — never for automatic expiration (the scheduled task or the
+    // periodic backup check below), which isn't a player-triggered action.
     public void clearTemporarySize(UUID uuid) {
-        restoreSize(uuid);
+        restoreSize(uuid, true);
     }
 
-    public void restoreSize(UUID uuid) {
+    public void restoreSize(UUID uuid, boolean animate) {
         TemporarySizeData tempData = temporarySizes.remove(uuid);
         activeTasks.remove(uuid);
 
@@ -104,24 +114,32 @@ public class TemporarySizeManager {
                     String regionId = currentRegion.getId();
 
                     if (plugin.getManagerHandler().getRegionManager().isDenyRegion(regionId)) {
-                        sizeManager.setSize(player, 1.0);
+                        applyRestoredSize(player, 1.0, animate);
                         return;
                     }
 
                     Double regionSize = DenyRegionHandler.getRegionSize(regionId);
                     if (regionSize != null) {
-                        sizeManager.setSize(player, regionSize);
+                        applyRestoredSize(player, regionSize, animate);
                         return;
                     }
                 }
 
-                sizeManager.setSize(player, tempData.getOriginalSize());
+                applyRestoredSize(player, tempData.getOriginalSize(), animate);
 
                 MessageUtil.sendMessage(player, "temp-size-expired",
                         new MessageUtil.PlaceholderBuilder()
                                 .add("size", tempData.getOriginalSize())
                                 .build());
             }
+        }
+    }
+
+    private void applyRestoredSize(Player player, double size, boolean animate) {
+        if (animate) {
+            plugin.getManagerHandler().getSizeAnimator().animateTo(player, size);
+        } else {
+            plugin.getManagerHandler().getSizeManager().setSize(player, size);
         }
     }
 
@@ -174,7 +192,7 @@ public class TemporarySizeManager {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             temporarySizes.forEach((uuid, data) -> {
                 if (data.isExpired()) {
-                    Bukkit.getScheduler().runTask(plugin, () -> restoreSize(uuid));
+                    Bukkit.getScheduler().runTask(plugin, () -> restoreSize(uuid, false));
                 }
             });
         }, 600L, 600L);

@@ -17,8 +17,9 @@ Change any player's size on the fly — permanently or for a set duration — wi
 ## 🚀 Features
 
 ### 📏 Dynamic Player Scaling
-- Change player size from **0.0625x to 16x**, instantly, no reconnect required
+- Change player size from **0.0625x to 16x**, no reconnect required
 - **Permanent** sizes persist across sessions; **temporary** sizes auto-revert when they expire
+- Commanded size changes (`set`/`reset`/`temporary set`/`temporary clear`) **smoothly animate** over ~0.8s with an ease-out curve instead of snapping instantly, with a configurable **sound + particle** on every change — toggle either one off, and pick your own sound/particle, via `ANIMATION`/`EFFECTS` in `setting.yml`; region-driven and automatic changes always stay instant and silent either way, so neither ever adds recurring cost
 - Runs on vanilla `Attribute.SCALE` — nothing to install client-side
 
 ### 🗺️ WorldGuard Region Control
@@ -44,6 +45,7 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region name (and size, for SIZE-REGION) straight into chat — no more hand-editing YAML and `/sizechange reload`
 - Both GUIs are **100% configurable** via `menu.yml` — title, size, fill item, navigation slots/materials, and every item's name/lore template, all editable, no code required
 - Fully customizable messages — MiniMessage tags, hex colors (`&#RRGGBB`), and legacy `&`/`§` codes all supported
+- A ready-to-copy **DeluxeMenus template** (`deluxemenu_template.yml`, generated on first run) — a self-service size picker players can open themselves, no permissions needed (requires the separate, optional DeluxeMenus plugin)
 
 ---
 
@@ -84,6 +86,6 @@ Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g.
 1. Download `SizeChange.jar`
 2. Drop it into your `plugins/` folder
 3. Make sure **WorldGuard** and **WorldEdit** are installed
-4. Start the server once to generate `setting.yml`, `message.yml` and `menu.yml`
+4. Start the server once to generate `setting.yml`, `message.yml`, `menu.yml`, and an optional `deluxemenu_template.yml`
 5. *(Optional)* Set `DATABASE.TYPE` to `MONGODB` in `setting.yml` if you're running a network
 6. Restart or `/sizechange reload`

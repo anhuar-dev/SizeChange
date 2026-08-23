@@ -172,7 +172,7 @@ public class SizeCommand {
         // PlayerDataManager's dirty-tracking cache current), it just doesn't become
         // visible until they leave.
         if (!DenyRegionHandler.hasVisualOverride(targetId)) {
-            plugin.getManagerHandler().getSizeManager().setSize(target, size);
+            plugin.getManagerHandler().getSizeAnimator().animateTo(target, size);
         }
         plugin.getManagerHandler().getPlayerDataManager().setSize(targetId, size);
 
@@ -202,7 +202,7 @@ public class SizeCommand {
         plugin.getManagerHandler().getTemporarySizeManager().cancelTemporarySize(targetId);
 
         if (!DenyRegionHandler.hasVisualOverride(targetId)) {
-            plugin.getManagerHandler().getSizeManager().setSize(target, 1.0);
+            plugin.getManagerHandler().getSizeAnimator().animateTo(target, 1.0);
         }
         plugin.getManagerHandler().getPlayerDataManager().setSize(targetId, 1.0);
 
@@ -287,9 +287,9 @@ public class SizeCommand {
             double trueOriginal = plugin.getManagerHandler().getPlayerDataManager()
                     .getLastKnownPermanent(targetId, sizeManager.getSize(target));
             plugin.getManagerHandler().getTemporarySizeManager()
-                    .setTemporarySize(target, size, trueOriginal, durationMs);
+                    .setTemporarySize(target, size, trueOriginal, durationMs, true);
         } else {
-            plugin.getManagerHandler().getTemporarySizeManager().setTemporarySize(target, size, durationMs);
+            plugin.getManagerHandler().getTemporarySizeManager().setTemporarySize(target, size, durationMs, true);
         }
 
         MessageUtil.sendMessage(sender, "temp-size-set",

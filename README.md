@@ -15,8 +15,9 @@ Change any player's size on the fly — permanently or for a set duration — wi
 ## 🚀 Features
 
 ### 📏 Dynamic Player Scaling
-- Change player size from **0.0625x to 16x**, instantly, no reconnect required
+- Change player size from **0.0625x to 16x**, no reconnect required
 - **Permanent** sizes persist across sessions; **temporary** sizes auto-revert when they expire
+- Commanded size changes (`set`/`reset`/`temporary set`/`temporary clear`) **smoothly animate** over ~0.8s with an ease-out curve instead of snapping instantly, with a configurable **sound + particle** on every change — toggle either one off, and pick your own sound/particle, via `ANIMATION`/`EFFECTS` in `setting.yml`; region-driven and automatic changes always stay instant and silent either way, so neither ever adds recurring cost
 - Runs on vanilla `Attribute.SCALE` — nothing to install client-side
 
 ### 🗺️ WorldGuard Region Control
@@ -42,6 +43,7 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region name (and size, for SIZE-REGION) straight into chat — no more hand-editing YAML and `/sizechange reload`
 - Both GUIs are **100% configurable** via `menu.yml` — title, size, fill item, navigation slots/materials, and every item's name/lore template, all editable, no code required
 - Fully customizable messages — MiniMessage tags, hex colors (`&#RRGGBB`), and legacy `&`/`§` codes all supported
+- A ready-to-copy **DeluxeMenus template** (`deluxemenu_template.yml`, generated on first run) — a self-service size picker players can open themselves, no permissions needed (requires the separate, optional DeluxeMenus plugin)
 
 ## 📋 Commands
 
@@ -78,7 +80,7 @@ Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g.
 1. Download `SizeChange.jar` (or build it — see [Build](#build) below)
 2. Drop it into your `plugins/` folder
 3. Make sure **WorldGuard** and **WorldEdit** are installed
-4. Start the server once to generate `setting.yml`, `message.yml` and `menu.yml`
+4. Start the server once to generate `setting.yml`, `message.yml`, `menu.yml`, and an optional `deluxemenu_template.yml`
 5. *(Optional)* Set `DATABASE.TYPE` to `MONGODB` in `setting.yml` if you're running a network
 6. Restart or `/sizechange reload`
 
@@ -90,26 +92,52 @@ The following is aimed at whoever administers the plugin at a low level or wants
 
 ## ⚙️ Configuration
 
+All three config files (`setting.yml`, `message.yml`, `menu.yml`) **auto-update on their own** when you drop in a
+new plugin version: on startup, any key a newer version introduced that your existing file doesn't have yet gets
+added automatically (with its default value) — including a new key added *inside* a section you already have (e.g.
+if a future update adds a new option under `ANIMATION`), not just entirely new top-level sections. Anything you've
+already set is never touched or overwritten. The one exception is `DENY-REGION`/`SIZE-REGION`: those hold your own
+region names, not a fixed schema, so they're only ever filled in if the whole section is missing — an update can't
+tell "a new key this version added" apart from "an entry you deliberately deleted," so it never edits them once
+they exist.
+
 ### `setting.yml` - Main Configuration
 
 ```yaml
+# TYPE must be exactly "SQLITE" or "MONGODB" — anything else falls back to
+# SQLite with a console warning.
 DATABASE:
-  TYPE: "SQLITE" # SQLITE or MONGODB
+  TYPE: "SQLITE"
 
-  SQLITE:
-    FILE: "players.db"
+  SQLITE:                    # used only when TYPE is "SQLITE"
+    FILE: "database/players.db"  # subfolder + the .db-wal/.db-shm files are created automatically
 
-  MONGODB:
+  MONGODB:                   # used only when TYPE is "MONGODB"
     URI: "mongodb://localhost:27017"
     DATABASE: "size_plugin"
     COLLECTION: "players"
 
-# Regions where size is forced to 1.0 (normal) while the player is inside
+# Smooth size transition for permanent set/reset and temporary set/clear
+# (~0.8s, ease-out). Set to false for an instant change instead.
+ANIMATION:
+  ENABLED: true
+
+# Sound + particle played once when a command actually changes a player's size.
+# SOUND/PARTICLE must be valid org.bukkit.Sound / org.bukkit.Particle names.
+EFFECTS:
+  ENABLED: true
+  SOUND: "ENTITY_SLIME_SQUISH"
+  PARTICLE: "POOF"
+
+# WorldGuard region names. Size is forced to 1.0 (normal) while a player is
+# standing inside any of these — their permanent/temporary size isn't lost,
+# just hidden until they leave. Manageable in-game via /sizechange config.
 DENY-REGION:
   - "spawn"
   - "pvp_arena"
 
-# Regions with a specific forced size
+# WorldGuard region name -> forced size, same behavior as DENY-REGION above
+# but with a specific value per region instead of always 1.0.
 SIZE-REGION:
   mini_game: 0.3   # Players shrink
   giant_zone: 3.0  # Players grow
@@ -280,6 +308,29 @@ region-config:
       name: "<red>✘ Delete permanently"
 ```
 
+### `deluxemenu_template.yml` - Self-Service Size Picker (optional)
+
+Generated in `plugins/SizeChange/` on first run, alongside the other config files — but unlike them, SizeChange
+never reads it. It's a ready-made menu in DeluxeMenus' own format, meant to be copied into
+`plugins/DeluxeMenus/menus/` if you have that plugin installed (it's a separate, optional dependency — not
+required by SizeChange). It gives regular players a GUI with preset permanent/temporary sizes they can apply to
+themselves.
+
+Every button runs `/sizechange ...` prefixed with `[console]`, which executes it as console and **skips
+SizeChange's own permission checks** — that's what lets a player without `sizechange.permanent.set`/
+`sizechange.temporary.set` use the menu on themselves. Do **not** grant players those real permissions thinking
+they need them for the menu — they don't, and if they have them they can also run `/sizechange` manually against
+any other player, not just themselves. Leave those permissions at their default (`op`); the menu buttons work
+regardless, because console execution bypasses the check entirely.
+
+One item, `permanent_vip_giant`, shows a different kind of gate: a **DeluxeMenus click requirement** (not a
+SizeChange permission) on a made-up node like `sizechange.menu.vip`, handed out via your rank plugin. The item is
+always visible; clicking it checks the requirement — with the permission, `left_click_commands` run and the resize
+happens; without it, `deny_commands` run instead (just a message) and the resize command never executes. Use this
+pattern for any preset you want to reserve for a specific rank. Note: DeluxeMenus' `has permission` requirement
+type needs **Vault** installed — without it, this specific button's gate won't work even though the rest of the
+menu will.
+
 ---
 
 ## 🔧 Technical Features
@@ -301,6 +352,15 @@ region-config:
 - **Thread-safe**: `ConcurrentHashMap` collections for region caches, saved sizes, and temporary sizes.
 - **Periodic temporary-size check**: every 30s (600 ticks) on an async thread; the actual restore happens on the
   main thread.
+- **Scoped animation**: `SizeAnimator` runs a short (~16 tick / 0.8s, ease-out) repeating task only for the four
+  command-triggered size changes (`permanent set/reset`, `temporary set/clear`) — toggleable via `ANIMATION.ENABLED`
+  in `setting.yml`. WorldGuard region crossings, automatic temporary-size expiration, and the join-time restore all
+  keep calling `SizeManager.setSize()` directly (instant, no task) regardless of that setting — those can fire far
+  more often than a player types a command, so they never animate even when the toggle is on.
+- **Scoped effects**: same four command-triggered changes also play a sound + particle once per change
+  (`EFFECTS.SOUND`/`EFFECTS.PARTICLE` in `setting.yml`, its own independent `EFFECTS.ENABLED` toggle — you can keep
+  the smooth motion without the noise, or vice versa). An invalid sound/particle name logs a console warning and is
+  skipped rather than crashing anything.
 
 ### WorldGuard Regions
 
@@ -455,7 +515,8 @@ src/main/java/dev/anhuar/
 │   └── PlayerListener.java      # Join/Quit
 ├── manager/
 │   ├── PlayerDataManager.java   # DB management, dirty tracking and auto-save
-│   ├── SizeManager.java         # Reads/writes Attribute.SCALE
+│   ├── SizeManager.java         # Reads/writes Attribute.SCALE (instant)
+│   ├── SizeAnimator.java        # Smooth ~0.5s interpolation, command-triggered changes only
 │   ├── RegionManager.java       # DENY-REGION cache
 │   └── TemporarySizeManager.java # Temporary sizes and their expiration
 ├── menu/

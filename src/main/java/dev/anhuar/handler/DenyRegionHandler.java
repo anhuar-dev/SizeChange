@@ -255,7 +255,8 @@ public class DenyRegionHandler extends Handler {
                                     cachedPlayer,
                                     activeTempSize,
                                     trueOriginalSize,
-                                    remainingTime
+                                    remainingTime,
+                                    false
                             );
                         } else {
                             restorePermanentSizeAsync(playerUUID, cachedPlayer);

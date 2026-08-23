@@ -46,7 +46,8 @@ public class PlayerListener implements Listener {
                                 player,
                                 playerData.getTemporarySize(),
                                 playerData.getSize(),
-                                remainingTime
+                                remainingTime,
+                                false
                         );
                         MessageUtil.sendMessage(player, "temp-size-restored",
                                 new MessageUtil.PlaceholderBuilder()
@@ -84,6 +85,8 @@ public class PlayerListener implements Listener {
         TemporarySizeManager tempManager = plugin.getManagerHandler().getTemporarySizeManager();
 
         UUID uuid = player.getUniqueId();
+
+        plugin.getManagerHandler().getSizeAnimator().cancel(uuid);
 
         // IMPORTANT: cache eviction is chained onto the save rather than called
         // straight after it. The save is asynchronous and writes the player into the

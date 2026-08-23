@@ -3,6 +3,7 @@ package dev.anhuar.handler;
 import dev.anhuar.SizeChange;
 import dev.anhuar.manager.PlayerDataManager;
 import dev.anhuar.manager.RegionManager;
+import dev.anhuar.manager.SizeAnimator;
 import dev.anhuar.manager.SizeManager;
 import dev.anhuar.manager.TemporarySizeManager;
 import dev.anhuar.menu.ChatInputManager;
@@ -15,6 +16,7 @@ public class ManagerHandler {
 
     private RegionManager regionManager;
     private SizeManager sizeManager;
+    private SizeAnimator sizeAnimator;
     private PlayerDataManager playerDataManager;
     private TemporarySizeManager temporarySizeManager;
     private ChatInputManager chatInputManager;
@@ -27,6 +29,7 @@ public class ManagerHandler {
     public void registerManager() {
         this.regionManager = new RegionManager();
         this.sizeManager = new SizeManager();
+        this.sizeAnimator = new SizeAnimator(plugin, sizeManager);
         this.playerDataManager = new PlayerDataManager(plugin);
         this.temporarySizeManager = new TemporarySizeManager(plugin);
         this.chatInputManager = new ChatInputManager(plugin);

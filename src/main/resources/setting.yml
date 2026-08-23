@@ -1,18 +1,52 @@
+# Which database backend to use for storing player sizes. Must be exactly
+# "SQLITE" or "MONGODB" (case-insensitive) — anything else falls back to
+# SQLite with a warning in the console.
 DATABASE:
   TYPE: "SQLITE"
 
+  # Used only when TYPE is "SQLITE". Path is relative to this plugin's own
+  # data folder (plugins/SizeChange/) — the "database/" subfolder (and the
+  # SQLite -wal/-shm side files next to the .db) are created automatically.
+  # Change this if you'd rather keep it flat as "players.db" instead.
   SQLITE:
-    FILE: "players.db"
+    FILE: "database/players.db"
 
+  # Used only when TYPE is "MONGODB". Ignored entirely while on SQLite.
   MONGODB:
     URI: "mongodb://localhost:27017"
     DATABASE: "size_plugin"
     COLLECTION: "players"
 
+# Smooth size transition for /sizechange permanent set/reset and temporary
+# set/clear (~0.8s, ease-out). Set to false for an instant change instead.
+# Never affects WorldGuard regions, automatic temporary-size expiration, or
+# the size restored on join — those always stay instant.
+ANIMATION:
+  ENABLED: true
+
+# Sound + particle played once when a command actually changes a player's size
+# (same scope as ANIMATION above — never on region crossings or automatic
+# expiration). SOUND/PARTICLE must be valid org.bukkit.Sound / org.bukkit.Particle
+# names; an invalid one is skipped with a console warning, not a crash.
+EFFECTS:
+  ENABLED: true
+  SOUND: "ENTITY_SLIME_SQUISH"
+  PARTICLE: "POOF"
+
+# List of WorldGuard region names. While a player is standing inside any of
+# these, their size is forced to 1.0 (normal), overriding both their
+# permanent size and any active temporary size — neither is lost, just
+# hidden until they leave the region. Manage this list in-game with
+# /sizechange config instead of editing it by hand if you'd rather not
+# restart/reload manually.
 DENY-REGION:
   - "red"
   - "blue"
 
+# Map of WorldGuard region name -> forced size, applied the same way as
+# DENY-REGION above (visual-only while inside, restored on exit, never
+# written to the database) but with a specific size per region instead of
+# always 1.0. Also manageable in-game via /sizechange config.
 SIZE-REGION:
   green: 0.1
   yellow: 2.0

@@ -1,0 +1,198 @@
+# ─────────────────────────────────────────────────────────────────────────
+# SizeChange — DeluxeMenus template (self-service size picker)
+#
+# This is NOT read by SizeChange itself. DeluxeMenus is a separate plugin —
+# install it yourself, it is not a dependency of SizeChange.
+#
+# Verified against the official DeluxeMenus wiki (wiki.helpch.at/helpchat-
+# plugins/deluxemenus) — action types, click commands and the requirements
+# structure below match its documented syntax as of this writing. DeluxeMenus
+# has changed its config format across major versions before, so if a section
+# doesn't load, check the wiki page for your installed version.
+#
+# Setup:
+#   1. Install DeluxeMenus (and PlaceholderAPI, which DeluxeMenus needs).
+#   2. Copy this file into plugins/DeluxeMenus/menus/.
+#   3. Run /dm reload (or restart the server).
+#   4. Players open it with /sizemenu (see "open_command" below), or give
+#      them a command/NPC/sign that runs "dm open sizechange_template".
+#
+# IMPORTANT — permissions: every button below runs the /sizechange command
+# with the "[console]" prefix, which executes it as console and skips
+# SizeChange's own permission checks (sizechange.permanent.set, etc.).
+# That's what lets a regular player use this menu on themselves without
+# needing those permissions at all. Do NOT grant players the real
+# sizechange.permanent.set / sizechange.temporary.set permissions thinking
+# they need them for this menu — they don't, and if they have them they can
+# also run /sizechange manually against any other player, not just
+# themselves. Leave those permissions at their default (op).
+#
+# Every command below targets %player_name% (the PlaceholderAPI placeholder
+# for the person who clicked), never a fixed name — customize the
+# sizes/durations, not the targeting.
+#
+# "permanent_vip_giant" below is a different kind of gate: a DeluxeMenus
+# click requirement, not a SizeChange permission. It checks a permission node
+# you make up yourself (e.g. "sizechange.menu.vip", handed out through your
+# rank/LuckPerms setup) purely to control who can use THAT BUTTON — it has
+# nothing to do with SizeChange's own sizechange.* permissions, which stay
+# bypassed via [console] either way. The item is always visible; clicking it
+# checks the requirement — with the permission, left_click_commands run (the
+# resize happens); without it, deny_commands run instead (just a message) and
+# the resize command never executes.
+#
+# The "has permission" requirement type needs Vault installed (DeluxeMenus
+# uses it for the permission check) — if your server doesn't have Vault,
+# this specific button's gate won't work even though the rest of the menu
+# will.
+# ─────────────────────────────────────────────────────────────────────────
+
+menu_title: '&8&lSizeChange &7- Pick a size'
+open_command: sizemenu
+size: 27
+
+fill_item:
+  material: GRAY_STAINED_GLASS_PANE
+  display_name: ' '
+
+items:
+
+  # ── Permanent sizes ──────────────────────────────────────────────────
+  permanent_giant:
+    material: TOTEM_OF_UNDYING
+    slot: 10
+    display_name: '&c&lGiant &7(3.0x, permanent)'
+    lore:
+      - '&7Permanently become a giant.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange permanent set %player_name% 3.0"
+      - "[message] &aYour size is now &f3.0x&a."
+    priority: 1
+
+  permanent_big:
+    material: IRON_INGOT
+    slot: 11
+    display_name: '&6&lBig &7(1.5x, permanent)'
+    lore:
+      - '&7Permanently become a bit bigger.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange permanent set %player_name% 1.5"
+      - "[message] &aYour size is now &f1.5x&a."
+    priority: 1
+
+  permanent_normal:
+    material: LIME_DYE
+    slot: 12
+    display_name: '&a&lNormal &7(1.0x, permanent)'
+    lore:
+      - '&7Reset to the default size.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange permanent reset %player_name%"
+      - "[message] &aYour size has been reset."
+    priority: 1
+
+  permanent_small:
+    material: PAPER
+    slot: 13
+    display_name: '&b&lSmall &7(0.5x, permanent)'
+    lore:
+      - '&7Permanently become a bit smaller.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange permanent set %player_name% 0.5"
+      - "[message] &aYour size is now &f0.5x&a."
+    priority: 1
+
+  permanent_tiny:
+    material: SLIME_BALL
+    slot: 14
+    display_name: '&d&lTiny &7(0.2x, permanent)'
+    lore:
+      - '&7Permanently become tiny.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange permanent set %player_name% 0.2"
+      - "[message] &aYour size is now &f0.2x&a."
+    priority: 1
+
+  # ── VIP-gated example (DeluxeMenus click requirement) ───────────────
+  permanent_vip_giant:
+    material: NETHER_STAR
+    slot: 15
+    display_name: '&6&lMega Giant &7(6.0x, permanent) &8[VIP]'
+    lore:
+      - '&7Permanently become a massive giant.'
+      - '&7Requires VIP rank.'
+      - ''
+      - '&eClick to apply'
+    left_click_requirement:
+      requirements:
+        vip_permission:
+          type: has permission
+          permission: sizechange.menu.vip
+      deny_commands:
+        - "[message] &cYou need VIP rank to use this option."
+    left_click_commands:
+      - "[console] sizechange permanent set %player_name% 6.0"
+      - "[message] &aYour size is now &f6.0x&a."
+    priority: 1
+
+  # ── Temporary sizes (10 minutes) ────────────────────────────────────
+  temporary_giant:
+    material: BLAZE_ROD
+    slot: 19
+    display_name: '&c&lGiant &7(3.0x, 10 minutes)'
+    lore:
+      - '&7Temporarily become a giant.'
+      - '&7Reverts automatically after 10m.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange temporary set %player_name% 3.0 10m"
+      - "[message] &aTemporary size &f3.0x&a for &f10 minutes&a."
+    priority: 1
+
+  temporary_tiny:
+    material: FEATHER
+    slot: 20
+    display_name: '&d&lTiny &7(0.2x, 10 minutes)'
+    lore:
+      - '&7Temporarily become tiny.'
+      - '&7Reverts automatically after 10m.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange temporary set %player_name% 0.2 10m"
+      - "[message] &aTemporary size &f0.2x&a for &f10 minutes&a."
+    priority: 1
+
+  temporary_clear:
+    material: BUCKET
+    slot: 21
+    display_name: '&e&lClear temporary size'
+    lore:
+      - '&7Cancel your active temporary size'
+      - '&7and go back to your permanent one.'
+      - ''
+      - '&eClick to apply'
+    left_click_commands:
+      - "[console] sizechange temporary clear %player_name%"
+      - "[message] &aTemporary size cleared."
+    priority: 1
+
+  # ── Close ────────────────────────────────────────────────────────────
+  close:
+    material: BARRIER
+    slot: 26
+    display_name: '&c&lClose'
+    left_click_commands:
+      - "[close]"
+    priority: 1

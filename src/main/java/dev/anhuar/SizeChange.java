@@ -35,9 +35,16 @@ public class SizeChange extends JavaPlugin {
             return;
         }
 
-        setting = new ConfigUtil(this, "setting.yml");
+        setting = new ConfigUtil(this, "setting.yml", "DENY-REGION", "SIZE-REGION");
         message = new ConfigUtil(this, "message.yml");
         menu = new ConfigUtil(this, "menu.yml");
+
+        // IMPORTANT: not a ConfigUtil — SizeChange never reads this file itself.
+        // It's a reference DeluxeMenus menu (a separate, optional plugin) that the
+        // admin can copy into plugins/DeluxeMenus/menus/ if they want a self-service
+        // size picker. saveResource(..., false) is a no-op if it already exists, so
+        // this is safe to call on every startup without touching admin edits.
+        saveResource("deluxemenu_template.yml", false);
 
         managerHandler = new ManagerHandler(this);
         commandHandler = new CommandHandler(this);
@@ -95,6 +102,9 @@ public class SizeChange extends JavaPlugin {
             }
             if (managerHandler.getTemporarySizeManager() != null) {
                 managerHandler.getTemporarySizeManager().shutdown();
+            }
+            if (managerHandler.getSizeAnimator() != null) {
+                managerHandler.getSizeAnimator().shutdown();
             }
         }
 
