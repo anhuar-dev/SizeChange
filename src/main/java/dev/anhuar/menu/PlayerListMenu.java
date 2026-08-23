@@ -94,7 +94,7 @@ public class PlayerListMenu {
                     Map<String, String> placeholders = new MessageUtil.PlaceholderBuilder()
                             .add("player", target.getName())
                             .add("size", size)
-                            .add("has_temp", hasTemp ? "Sí" : "No")
+                            .add("has_temp", hasTemp ? "Yes" : "No")
                             .add("temp_size", tempSizeStr)
                             .add("remaining", remainingStr)
                             .build();

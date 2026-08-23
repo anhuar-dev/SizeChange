@@ -10,8 +10,8 @@ DATABASE:
     COLLECTION: "players"
 
 DENY-REGION:
-  - "rojo"
-  - "azul"
+  - "red"
+  - "blue"
 
 SIZE-REGION:
   green: 0.1

@@ -3,7 +3,7 @@ version: '${version}'
 main: dev.anhuar.SizeChange
 api-version: '1.21'
 author: anhuar
-description: Plugin para modificar el tamaño de los jugadores con persistencia
+description: Plugin to change players' size with persistence
 
 dependencies:
   server:

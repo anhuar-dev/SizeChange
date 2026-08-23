@@ -33,7 +33,7 @@ public class ChatInputManager implements Listener {
     public void request(Player player, String promptMessageKey, Map<String, String> placeholders, Consumer<String> callback) {
         player.closeInventory();
         MessageUtil.sendMessage(player, promptMessageKey, placeholders);
-        player.sendMessage(ColorUtil.translate("<gray>Escribe <red>cancel</red> para cancelar."));
+        player.sendMessage(ColorUtil.translate("<gray>Type <red>cancel</red> to cancel."));
         pending.put(player.getUniqueId(), callback);
     }
 

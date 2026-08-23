@@ -1,12 +1,12 @@
 list:
-  title: "<dark_gray>Jugadores conectados <gray>({page}/{total_pages})"
+  title: "<dark_gray>Online Players <gray>({page}/{total_pages})"
   rows: 6
 
   fill:
     material: GRAY_STAINED_GLASS_PANE
     name: "<reset>"
 
-  # Slots donde se colocan las cabezas de jugador (el resto se rellena con "fill").
+  # Slots where player heads are placed (everything else is filled with "fill").
   content:
     start-slot: 0
     end-slot: 44
@@ -14,36 +14,36 @@ list:
   player-head:
     name: "<yellow>{player}"
     lore:
-      - "<gray>Tamaño permanente: <white>{size}</white>"
-      - "<gray>Temporal activo: <white>{has_temp}</white>"
-      - "<gray>Tamaño temporal: <white>{temp_size}</white>"
-      - "<gray>Tiempo restante: <white>{remaining}</white>"
+      - "<gray>Permanent size: <white>{size}</white>"
+      - "<gray>Temporary active: <white>{has_temp}</white>"
+      - "<gray>Temporary size: <white>{temp_size}</white>"
+      - "<gray>Time remaining: <white>{remaining}</white>"
 
   navigation:
     previous:
       slot: 48
       material: ARROW
       disabled-material: GRAY_STAINED_GLASS_PANE
-      name: "<gray>« Anterior"
+      name: "<gray>« Previous"
     next:
       slot: 50
       material: ARROW
       disabled-material: GRAY_STAINED_GLASS_PANE
-      name: "<gray>Siguiente »"
+      name: "<gray>Next »"
     info:
       slot: 49
       material: PAPER
-      name: "<yellow>Jugadores online: <white>{total_players}</white>"
+      name: "<yellow>Online players: <white>{total_players}</white>"
       lore:
-        - "<gray>Página <white>{page}</white>/<white>{total_pages}</white>"
+        - "<gray>Page <white>{page}</white>/<white>{total_pages}</white>"
 
   empty:
     slot: 22
     material: BARRIER
-    name: "<red>No hay jugadores conectados"
+    name: "<red>No players online"
 
 region-config-select:
-  title: "<dark_gray>Configurar Regiones"
+  title: "<dark_gray>Configure Regions"
   rows: 3
 
   fill:
@@ -55,20 +55,20 @@ region-config-select:
     material: BARRIER
     name: "<red>DENY-REGION"
     lore:
-      - "<gray>Regiones que fuerzan tamaño"
-      - "<gray><white>1.0</white> al entrar"
+      - "<gray>Regions that force"
+      - "<gray><white>1.0</white> size on entry"
       - ""
-      - "<yellow>Click para gestionar"
+      - "<yellow>Click to manage"
 
   size-button:
     slot: 15
     material: PAPER
     name: "<yellow>SIZE-REGION"
     lore:
-      - "<gray>Regiones que fuerzan un tamaño"
-      - "<gray>específico al entrar"
+      - "<gray>Regions that force a"
+      - "<gray>specific size on entry"
       - ""
-      - "<yellow>Click para gestionar"
+      - "<yellow>Click to manage"
 
 region-config:
   title: "<dark_gray>{type} <gray>({page}/{total_pages})"
@@ -86,65 +86,65 @@ region-config:
     material: BARRIER
     name: "<red>{region}"
     lore:
-      - "<gray>Tipo: <white>DENY-REGION</white>"
-      - "<gray>Fuerza tamaño <white>1.0</white> al entrar"
+      - "<gray>Type: <white>DENY-REGION</white>"
+      - "<gray>Forces <white>1.0</white> size on entry"
       - ""
-      - "<yellow>Click para eliminar (pide confirmación)"
+      - "<yellow>Click to remove (asks for confirmation)"
 
   size-entry:
     material: PAPER
     name: "<yellow>{region}"
     lore:
-      - "<gray>Tipo: <white>SIZE-REGION</white>"
-      - "<gray>Fuerza tamaño <white>{size}</white> al entrar"
+      - "<gray>Type: <white>SIZE-REGION</white>"
+      - "<gray>Forces <white>{size}</white> size on entry"
       - ""
-      - "<yellow>Click para eliminar (pide confirmación)"
+      - "<yellow>Click to remove (asks for confirmation)"
 
   confirm-delete:
-    title: "<red>¿Eliminar '{region}'?"
+    title: "<red>Delete '{region}'?"
     rows: 3
     info:
       slot: 13
       material: PAPER
       name: "<yellow>{region}"
       lore:
-        - "<gray>Esta acción no se puede deshacer."
+        - "<gray>This action cannot be undone."
     cancel:
       slot: 11
       material: LIME_STAINED_GLASS_PANE
-      name: "<green>✔ Cancelar"
+      name: "<green>✔ Cancel"
       lore:
-        - "<gray>Mantener esta región configurada"
+        - "<gray>Keep this region configured"
     confirm:
       slot: 15
       material: RED_STAINED_GLASS_PANE
-      name: "<red>✘ Eliminar permanentemente"
+      name: "<red>✘ Delete permanently"
       lore:
-        - "<gray>Quita esta región de setting.yml"
+        - "<gray>Removes this region from setting.yml"
 
   add:
     slot: 49
     material: LIME_DYE
-    name: "<green>+ Agregar {type}"
+    name: "<green>+ Add {type}"
     lore:
-      - "<gray>Click para agregar una nueva"
-      - "<gray>entrada a {type}"
+      - "<gray>Click to add a new"
+      - "<gray>entry to {type}"
 
   back:
     slot: 45
     material: ARROW
-    name: "<gray>← Volver"
+    name: "<gray>← Back"
     lore:
-      - "<gray>Elegir otro tipo de región"
+      - "<gray>Choose another region type"
 
   navigation:
     previous:
       slot: 48
       material: ARROW
       disabled-material: GRAY_STAINED_GLASS_PANE
-      name: "<gray>« Anterior"
+      name: "<gray>« Previous"
     next:
       slot: 50
       material: ARROW
       disabled-material: GRAY_STAINED_GLASS_PANE
-      name: "<gray>Siguiente »"
+      name: "<gray>Next »"

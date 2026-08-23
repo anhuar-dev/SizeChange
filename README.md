@@ -75,7 +75,7 @@ Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g.
 
 ## 📦 Installation
 
-1. Download `SizeChange.jar` (or build it — see [Compilar](#compilar) below)
+1. Download `SizeChange.jar` (or build it — see [Build](#build) below)
 2. Drop it into your `plugins/` folder
 3. Make sure **WorldGuard** and **WorldEdit** are installed
 4. Start the server once to generate `setting.yml`, `message.yml` and `menu.yml`
@@ -84,17 +84,17 @@ Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g.
 
 ---
 
-# 🔧 Documentación Técnica
+# 🔧 Technical Documentation
 
-Lo siguiente está pensado para quien administre el plugin a bajo nivel o quiera editar el código fuente.
+The following is aimed at whoever administers the plugin at a low level or wants to edit the source code.
 
-## ⚙️ Configuración
+## ⚙️ Configuration
 
-### `setting.yml` - Configuración Principal
+### `setting.yml` - Main Configuration
 
 ```yaml
 DATABASE:
-  TYPE: "SQLITE" # SQLITE o MONGODB
+  TYPE: "SQLITE" # SQLITE or MONGODB
 
   SQLITE:
     FILE: "players.db"
@@ -104,88 +104,88 @@ DATABASE:
     DATABASE: "size_plugin"
     COLLECTION: "players"
 
-# Regiones donde se fuerza tamaño 1.0 (normal) mientras el jugador esté dentro
+# Regions where size is forced to 1.0 (normal) while the player is inside
 DENY-REGION:
   - "spawn"
   - "pvp_arena"
 
-# Regiones con tamaño forzado específico
+# Regions with a specific forced size
 SIZE-REGION:
-  mini_game: 0.3   # Jugadores se hacen pequeños
-  giant_zone: 3.0  # Jugadores se hacen gigantes
+  mini_game: 0.3   # Players shrink
+  giant_zone: 3.0  # Players grow
 ```
 
-### `message.yml` - Mensajes Personalizables
+### `message.yml` - Customizable Messages
 
-Placeholders disponibles (varían según la clave): `{player}`, `{size}`, `{temp_size}`, `{duration}`, `{remaining}`, `{version}`, `{database}`, `{active_temp}`, `{regions}`, `{region}`.
+Available placeholders (vary by key): `{player}`, `{size}`, `{temp_size}`, `{duration}`, `{remaining}`, `{version}`, `{database}`, `{active_temp}`, `{regions}`, `{region}`.
 
 ```yaml
 help:
   - "<gold><bold>SizeChange Plugin</bold>"
-  - "<yellow>/sizechange permanent set <jugador> <tamaño> <gray>- Cambiar tamaño permanente"
-  - "<yellow>/sizechange permanent reset <jugador> <gray>- Resetear tamaño a normal"
-  - "<yellow>/sizechange temporary set <jugador> <tamaño> <duración> <gray>- Aplicar tamaño temporal"
-  - "<yellow>/sizechange temporary clear <jugador> <gray>- Cancelar tamaño temporal"
-  - "<yellow>/sizechange view <jugador> <gray>- Ver tamaño actual"
-  - "<yellow>/sizechange list <gray>- Abrir el menú de jugadores conectados"
-  - "<yellow>/sizechange info <gray>- Ver diagnóstico del plugin"
-  - "<yellow>/sizechange config <gray>- Abrir el menú de regiones (DENY/SIZE)"
-  - "<yellow>/sizechange reload <gray>- Recargar configuración"
+  - "<yellow>/sizechange permanent set <player> <size> <gray>- Change permanent size"
+  - "<yellow>/sizechange permanent reset <player> <gray>- Reset size to normal"
+  - "<yellow>/sizechange temporary set <player> <size> <duration> <gray>- Apply a temporary size"
+  - "<yellow>/sizechange temporary clear <player> <gray>- Cancel temporary size"
+  - "<yellow>/sizechange view <player> <gray>- View current size"
+  - "<yellow>/sizechange list <gray>- Open the online players menu"
+  - "<yellow>/sizechange info <gray>- View plugin diagnostics"
+  - "<yellow>/sizechange config <gray>- Open the region menu (DENY/SIZE)"
+  - "<yellow>/sizechange reload <gray>- Reload configuration"
 
-size-set: "<green>✓ Tamaño de <white>{player}</white> establecido a <white>{size}</white>"
-size-reset: "<green>✓ Tamaño de <white>{player}</white> reseteado a normal (1.0)"
-size-changed: "<yellow>Tu tamaño ha sido cambiado a <white>{size}</white>"
+size-set: "<green>✓ <white>{player}</white>'s size set to <white>{size}</white>"
+size-reset: "<green>✓ <white>{player}</white>'s size reset to normal (1.0)"
+size-changed: "<yellow>Your size has been changed to <white>{size}</white>"
 
-temp-size-set: "<green>✓ Tamaño temporal de <white>{player}</white> establecido a <white>{size}</white> por <white>{duration}</white>"
-temp-size-applied: "<yellow>Se te ha aplicado un tamaño temporal de <white>{size}</white> por <white>{duration}</white>"
-temp-size-cleared: "<green>✓ Tamaño temporal de <white>{player}</white> cancelado y restaurado"
+temp-size-set: "<green>✓ <white>{player}</white>'s temporary size set to <white>{size}</white> for <white>{duration}</white>"
+temp-size-applied: "<yellow>You've been given a temporary size of <white>{size}</white> for <white>{duration}</white>"
+temp-size-cleared: "<green>✓ <white>{player}</white>'s temporary size cancelled and restored"
 
-player-not-found: "<red>✗ El jugador <white>{player}</white> no está conectado"
-invalid-duration: "<red>✗ Duración inválida. Usa formato: 30s, 5m, 2h, 1d"
-gui-console-only: "<red>✗ Este comando solo puede ejecutarse en el juego."
+player-not-found: "<red>✗ Player <white>{player}</white> is not online"
+invalid-duration: "<red>✗ Invalid duration. Use format: 30s, 5m, 2h, 1d"
+gui-console-only: "<red>✗ This command can only be run in-game."
 
 info:
   - "<gold><bold>SizeChange</bold> <gray>v{version}</gray>"
-  - "<yellow>Base de datos: <white>{database}</white>"
-  - "<yellow>Tamaños temporales activos: <white>{active_temp}</white>"
-  - "<yellow>Regiones configuradas: <white>{regions}</white>"
+  - "<yellow>Database: <white>{database}</white>"
+  - "<yellow>Active temporary sizes: <white>{active_temp}</white>"
+  - "<yellow>Configured regions: <white>{regions}</white>"
 
-config-add-prompt-name: "<yellow>Escribe el nombre de la región."
-config-add-prompt-size: "<yellow>Escribe el tamaño (0.0625 - 16.0)."
-config-add-duplicate: "<red>✗ La región <white>{region}</white> ya está configurada."
-config-add-region-not-found-warning: "<gray>⚠ No se encontró una región llamada <white>{region}</white> en ningún mundo cargado. Se guardó de todas formas — verifica el nombre."
-config-deny-added: "<green>✓ '{region}' agregada a DENY-REGION."
-config-size-added: "<green>✓ '{region}' agregada a SIZE-REGION con tamaño {size}."
+config-add-prompt-name: "<yellow>Type the region name."
+config-add-prompt-size: "<yellow>Type the size (0.0625 - 16.0)."
+config-add-duplicate: "<red>✗ Region <white>{region}</white> is already configured."
+config-add-region-not-found-warning: "<gray>⚠ No region named <white>{region}</white> was found in any loaded world. It was saved anyway — double-check the name."
+config-deny-added: "<green>✓ '{region}' added to DENY-REGION."
+config-size-added: "<green>✓ '{region}' added to SIZE-REGION with size {size}."
 
-reload: "<green>✓ Configuración recargada exitosamente"
+reload: "<green>✓ Configuration reloaded successfully"
 ```
 
-Todas las claves reales están en `src/main/resources/message.yml`; edítalas directamente para personalizar textos,
-colores (MiniMessage) y prefijo.
+All the real keys live in `src/main/resources/message.yml`; edit them directly to customize text,
+colors (MiniMessage) and prefix.
 
-### `menu.yml` - Menú GUI de `/sizechange list`
+### `menu.yml` - `/sizechange list` GUI Menu
 
-Controla por completo el menú paginado que abre `/sizechange list`: título, filas, item de relleno, slots de
-navegación (anterior/siguiente/info) y la plantilla de nombre+lore de cada cabeza de jugador. Placeholders de la
-cabeza: `{player}`, `{size}`, `{has_temp}`, `{temp_size}`, `{remaining}`; placeholders de navegación: `{page}`,
+Fully controls the paginated menu opened by `/sizechange list`: title, rows, fill item, navigation
+slots (previous/next/info), and the name+lore template for each player head. Head placeholders:
+`{player}`, `{size}`, `{has_temp}`, `{temp_size}`, `{remaining}`; navigation placeholders: `{page}`,
 `{total_pages}`, `{total_players}`.
 
 ```yaml
 list:
-  title: "<dark_gray>Jugadores conectados <gray>({page}/{total_pages})"
+  title: "<dark_gray>Online Players <gray>({page}/{total_pages})"
   rows: 6
 
   content:
     start-slot: 0
-    end-slot: 44          # 45 slots visibles por página
+    end-slot: 44          # 45 visible slots per page
 
   player-head:
     name: "<yellow>{player}"
     lore:
-      - "<gray>Tamaño permanente: <white>{size}</white>"
-      - "<gray>Temporal activo: <white>{has_temp}</white>"
-      - "<gray>Tamaño temporal: <white>{temp_size}</white>"
-      - "<gray>Tiempo restante: <white>{remaining}</white>"
+      - "<gray>Permanent size: <white>{size}</white>"
+      - "<gray>Temporary active: <white>{has_temp}</white>"
+      - "<gray>Temporary size: <white>{temp_size}</white>"
+      - "<gray>Time remaining: <white>{remaining}</white>"
 
   navigation:
     previous:
@@ -198,36 +198,37 @@ list:
       disabled-material: GRAY_STAINED_GLASS_PANE
 ```
 
-El menú es **solo informativo**: hacer clic en una cabeza no hace nada (toda la info ya se ve en el lore al pasar el
-cursor); solo los slots de `navigation.previous`/`navigation.next` reaccionan, cambiando de página. Solo lista
-jugadores conectados — no hace queries nuevas a la base de datos.
+The menu is **informational only**: clicking a head does nothing (all the info already shows in the
+lore on hover); only the `navigation.previous`/`navigation.next` slots react, changing the page. It
+only lists online players — no new database queries.
 
-### `menu.yml` - Menú GUI de `/sizechange config`
+### `menu.yml` - `/sizechange config` GUI Menu
 
-A diferencia del anterior, este flujo **sí escribe en `setting.yml`**, y tiene dos pantallas:
+Unlike the one above, this flow **does write to `setting.yml`**, and has two screens:
 
-1. **`region-config-select`** — el selector que abre `/sizechange config`: dos botones, `deny-button` y
-   `size-button`. Elegir uno abre `region-config` ya filtrado a esa colección — el resto del flujo (agregar, listar,
-   eliminar) ya sabe si estás gestionando `DENY-REGION` o `SIZE-REGION`, así que no vuelve a preguntar el tipo.
-2. **`region-config`** — la lista paginada de esa colección (plantillas `deny-entry`/`size-entry` con placeholders
-   `{region}`/`{size}`; el título soporta `{type}` → "DENY-REGION" o "SIZE-REGION"). Clic en una entrada existente
-   abre una **pantalla de confirmación** (`confirm-delete`: botones `cancel`/`confirm`, también configurables) antes
-   de borrarla — evita que un misclick se lleve una región de un solo golpe. El botón `back` regresa al selector. El
-   botón `add` (slot configurable) dispara un flujo por **chat**: pide el nombre de la región (valida que no exista
-   ya en ninguna de las dos listas — DENY o SIZE, sin importar cuál estés editando —, y rechaza nombres vacíos o con
-   un punto `.`, ya que `ConfigurationSection` de Bukkit interpreta el punto como separador de rutas), y si estás en
-   el menú de SIZE, además pide el valor numérico (`0.0625`–`16.0`). En cualquier paso se puede escribir `cancel`
-   para abortar.
+1. **`region-config-select`** — the selector opened by `/sizechange config`: two buttons, `deny-button`
+   and `size-button`. Picking one opens `region-config` already scoped to that collection — the rest of
+   the flow (add, list, remove) already knows whether you're managing `DENY-REGION` or `SIZE-REGION`, so
+   it never asks for the type again.
+2. **`region-config`** — the paginated list of that collection (templates `deny-entry`/`size-entry` with
+   placeholders `{region}`/`{size}`; the title supports `{type}` → "DENY-REGION" or "SIZE-REGION"). Clicking
+   an existing entry opens a **confirmation screen** (`confirm-delete`: `cancel`/`confirm` buttons, also
+   configurable) before removing it — avoiding a misclick wiping out a configured region. The `back` button
+   returns to the selector. The `add` button (configurable slot) triggers a **chat** flow: it asks for the
+   region name (validates it doesn't already exist in either list — DENY or SIZE, regardless of which one
+   you're editing —, and rejects empty names or names with a dot `.`, since Bukkit's `ConfigurationSection`
+   treats the dot as a path separator), and if you're in the SIZE menu, it also asks for the numeric value
+   (`0.0625`–`16.0`). At any step you can type `cancel` to abort.
 
-Tras guardar o eliminar, se llama automáticamente a
-`regionManager.reloadDenyRegions()`/`DenyRegionHandler.reloadSizeRegions()` — el cambio aplica en caliente, sin
-necesitar `/sizechange reload`. Si el nombre escrito no coincide con ninguna región real de WorldGuard en los mundos
-cargados, se guarda igual pero se avisa con `config-add-region-not-found-warning` (útil para detectar typos sin
-bloquear el guardado, por ejemplo si la región es de un mundo que aún no está cargado).
+After saving or removing, `regionManager.reloadDenyRegions()`/`DenyRegionHandler.reloadSizeRegions()` is
+called automatically — the change applies live, no need for `/sizechange reload`. If the typed name
+doesn't match any real WorldGuard region in the loaded worlds, it still saves but warns with
+`config-add-region-not-found-warning` (useful for catching typos without blocking a legitimate save, e.g.
+if the region belongs to a world that isn't loaded yet).
 
 ```yaml
 region-config-select:
-  title: "<dark_gray>Configurar Regiones"
+  title: "<dark_gray>Configure Regions"
   rows: 3
   deny-button:
     slot: 11
@@ -246,91 +247,91 @@ region-config:
     material: BARRIER
     name: "<red>{region}"
     lore:
-      - "<gray>Fuerza tamaño <white>1.0</white> al entrar"
-      - "<yellow>Click para eliminar (pide confirmación)"
+      - "<gray>Forces <white>1.0</white> size on entry"
+      - "<yellow>Click to remove (asks for confirmation)"
 
   size-entry:
     material: PAPER
     name: "<yellow>{region}"
     lore:
-      - "<gray>Fuerza tamaño <white>{size}</white> al entrar"
-      - "<yellow>Click para eliminar (pide confirmación)"
+      - "<gray>Forces <white>{size}</white> size on entry"
+      - "<yellow>Click to remove (asks for confirmation)"
 
   add:
     slot: 49
     material: LIME_DYE
-    name: "<green>+ Agregar {type}"
+    name: "<green>+ Add {type}"
 
   back:
     slot: 45
     material: ARROW
-    name: "<gray>← Volver"
+    name: "<gray>← Back"
 
   confirm-delete:
-    title: "<red>¿Eliminar '{region}'?"
+    title: "<red>Delete '{region}'?"
     rows: 3
     cancel:
       slot: 11
       material: LIME_STAINED_GLASS_PANE
-      name: "<green>✔ Cancelar"
+      name: "<green>✔ Cancel"
     confirm:
       slot: 15
       material: RED_STAINED_GLASS_PANE
-      name: "<red>✘ Eliminar permanentemente"
+      name: "<red>✘ Delete permanently"
 ```
 
 ---
 
-## 🔧 Funcionalidades Técnicas
+## 🔧 Technical Features
 
-### Persistencia de Datos
+### Data Persistence
 
-- **Auto-guardado periódico**: cada 5 minutos, solo para jugadores cuyo estado cambió desde el último guardado (dirty
-  tracking), evitando escrituras innecesarias.
-- **Al desconectar**: guarda el tamaño real del jugador de forma inmediata (el permanente, no el visual si está en una
-  región o con temporal activo).
-- **Al conectar**: restaura el tamaño permanente guardado; si tenía un temporal activo y no expiró, lo restaura con el
-  tiempo restante calculado desde su expiración guardada.
-- **Tamaños temporales**: persisten entre reinicios del servidor mientras no hayan expirado.
+- **Periodic auto-save**: every 5 minutes, only for players whose state changed since the last save (dirty
+  tracking), avoiding unnecessary writes.
+- **On disconnect**: saves the player's real size immediately (the permanent one, not the visual one if they're
+  inside a region or have an active temporary size).
+- **On connect**: restores the saved permanent size; if they had an active temporary size that hadn't expired, it's
+  restored with the remaining time calculated from its saved expiration.
+- **Temporary sizes**: persist across server restarts as long as they haven't expired.
 
-### Rendimiento Optimizado
+### Optimized Performance
 
-- **Operaciones asíncronas**: carga/guardado en DB sin bloquear el hilo principal.
-- **Dirty tracking**: el guardado periódico solo escribe jugadores con cambios reales.
-- **Thread-safe**: colecciones `ConcurrentHashMap` para caches de regiones, tamaños guardados y temporales.
-- **Verificación periódica de temporales**: cada 30s (600 ticks) en un hilo asíncrono, la restauración real ocurre en el
-  hilo principal.
+- **Asynchronous operations**: DB reads/writes without blocking the main thread.
+- **Dirty tracking**: the periodic save only writes players with actual changes.
+- **Thread-safe**: `ConcurrentHashMap` collections for region caches, saved sizes, and temporary sizes.
+- **Periodic temporary-size check**: every 30s (600 ticks) on an async thread; the actual restore happens on the
+  main thread.
 
-### Regiones WorldGuard
+### WorldGuard Regions
 
-- **Detección al cruzar límites**: se activa mediante un `Handler` de sesión de WorldGuard (`onCrossBoundary`), no
-  revisa todos los ticks.
-- **Aplicación al conectar**: si el jugador ya está dentro de una región DENY/SIZE al unirse, se le aplica 3 segundos
-  después del join.
-- **Cache estático de regiones**: la configuración de `DENY-REGION`/`SIZE-REGION` se cachea en memoria y se recarga con
-  `/sizechange reload` (que también recarga `setting.yml`, `message.yml` y `menu.yml`).
-- **Restauración automática al salir**: recupera el tamaño guardado (permanente o temporal con tiempo restante) y lo
-  reaplica.
-- **Sin persistencia**: los cambios de tamaño por región no se escriben en la base de datos.
-- **Expiración dentro de una región**: si un tamaño temporal expira mientras el jugador sigue dentro de una región
-  DENY/SIZE, se mantiene el tamaño forzado por la región en vez de restaurar el original de inmediato.
-
----
-
-## 📊 Comparación de Bases de Datos
-
-| Base de Datos | Requiere servidor externo | Recomendado para              | Ventajas                                       |
-|---------------|---------------------------|-------------------------------|------------------------------------------------|
-| **SQLite**    | No                        | La mayoría de servidores      | Simple, rápido, sin configuración adicional    |
-| **MongoDB**   | Sí                        | Networks / servidores grandes | Escalable, compartible entre varios servidores |
-
-**Recomendación:** usa **SQLite** salvo que ya operes una red con MongoDB compartido.
+- **Boundary-crossing detection**: triggered via a WorldGuard session `Handler` (`onCrossBoundary`), not checked
+  every tick.
+- **Applied on join**: if the player is already inside a DENY/SIZE region when they join, it's applied 3 seconds
+  after join.
+- **Static region cache**: the `DENY-REGION`/`SIZE-REGION` configuration is cached in memory and reloaded with
+  `/sizechange reload` (which also reloads `setting.yml`, `message.yml` and `menu.yml`).
+- **Automatic restore on exit**: retrieves the saved size (permanent or temporary with remaining time) and
+  reapplies it.
+- **No persistence**: size changes caused by regions are never written to the database.
+- **Expiration inside a region**: if a temporary size expires while the player is still inside a DENY/SIZE region,
+  the region's forced size stays in effect instead of immediately restoring the original.
 
 ---
 
-## 📖 Ejemplos Completos
+## 📊 Database Comparison
 
-### Ejemplo 1: Servidor Survival con VIPs
+| Database    | Requires external server | Recommended for            | Advantages                                  |
+|-------------|---------------------------|----------------------------|----------------------------------------------|
+| **SQLite**  | No                        | Most servers                | Simple, fast, no extra configuration          |
+| **MongoDB** | Yes                       | Networks / large servers    | Scalable, shareable across multiple servers   |
+
+**Recommendation:** use **SQLite** unless you already run a network with a shared MongoDB.
+
+---
+
+## 📖 Full Examples
+
+### Example 1: Survival Server with VIPs
 
 ```yaml
 # setting.yml
@@ -346,7 +347,7 @@ SIZE-REGION:
 /sizechange permanent set VIPPlayer2 1.2
 ```
 
-### Ejemplo 2: Mini-Juego "Gigante vs Hormigas"
+### Example 2: Mini-Game "Giant vs. Ants"
 
 ```bash
 /sizechange temporary set GiantPlayer 5.0 10m
@@ -354,117 +355,117 @@ SIZE-REGION:
 /sizechange temporary set Player2 0.2 10m
 ```
 
-### Ejemplo 3: Zona PvP Balanceada
+### Example 3: Balanced PvP Zone
 
 ```yaml
 # setting.yml
 DENY-REGION:
-  - "pvp_arena"  # Todos a tamaño 1.0 dentro del PvP
+  - "pvp_arena"  # Everyone forced to 1.0 size inside the PvP zone
 ```
 
 ---
 
-## 🔄 Flujo de Funcionamiento
+## 🔄 How It Works
 
-### Cambio de Tamaño Permanente
-
-```
-1. Ejecutar: /sizechange permanent set Player1 2.0
-2. Cambia el atributo Attribute.SCALE
-3. Guarda en DB de forma asíncrona
-4. Persiste entre sesiones
-```
-
-### Tamaño Temporal
+### Permanent Size Change
 
 ```
-1. Ejecutar: /sizechange temporary set Player1 3.0 10m
-2. Guarda el tamaño actual como "original"
-3. Aplica el tamaño temporal (3.0)
-4. Programa la restauración para dentro de 10 minutos
-5. Si el jugador se desconecta: se guarda el estado (tamaño original + expiración) en DB
-6. Si se reconecta antes de que expire: restaura el temporal con el tiempo restante
-7. Al expirar: restaura el tamaño original automáticamente
-   (o mantiene el tamaño forzado si el jugador sigue dentro de una región DENY/SIZE)
+1. Run: /sizechange permanent set Player1 2.0
+2. Changes the Attribute.SCALE attribute
+3. Saves to the DB asynchronously
+4. Persists across sessions
 ```
 
-### Regiones WorldGuard
+### Temporary Size
 
 ```
-Jugador entra a "mini_game" (SIZE-REGION: 0.3)
-  → Guarda el tamaño actual (temporal u original de DB) en cache
-  → Cambia a 0.3x
-
-Jugador sale de "mini_game"
-  → Recupera el tamaño guardado del cache
-  → Si tenía un temporal activo, lo restaura con el tiempo restante recalculado
-  → Si no, restaura el tamaño permanente desde la DB
-  → NO modifica la base de datos
+1. Run: /sizechange temporary set Player1 3.0 10m
+2. Saves the current size as "original"
+3. Applies the temporary size (3.0)
+4. Schedules the restore for 10 minutes later
+5. If the player disconnects: the state (original size + expiration) is saved to the DB
+6. If they reconnect before it expires: the temporary size is restored with the remaining time
+7. On expiration: automatically restores the original size
+   (or keeps the forced size if the player is still inside a DENY/SIZE region)
 ```
 
----
-
-## 🚨 Solución de Problemas
-
-### Plugin no inicia
+### WorldGuard Regions
 
 ```
-✅ Verificar que WorldGuard (y WorldEdit) estén instalados
-✅ Revisar la versión de Java (mínimo 21)
-✅ Comprobar logs en consola
-```
+Player enters "mini_game" (SIZE-REGION: 0.3)
+  → Caches the current size (temporary or original from the DB)
+  → Changes to 0.3x
 
-### Base de datos no conecta
-
-```
-✅ Verificar configuración en setting.yml
-✅ Si es MongoDB: verificar que el servidor esté corriendo y la URI sea correcta
-✅ Si es SQLite: verificar permisos de escritura en la carpeta del plugin
-```
-
-### Tamaños no persisten
-
-```
-✅ Verificar que TYPE en setting.yml sea correcto (SQLITE o MONGODB)
-✅ Revisar que el archivo/colección se esté creando
-✅ Comprobar que no haya errores en consola al conectar
+Player leaves "mini_game"
+  → Retrieves the cached size
+  → If they had an active temporary size, restores it with the recalculated remaining time
+  → Otherwise, restores the permanent size from the DB
+  → Does NOT modify the database
 ```
 
 ---
 
-## 🔧 Desarrollo
+## 🚨 Troubleshooting
 
-### Estructura del Proyecto
+### Plugin doesn't start
+
+```
+✅ Check that WorldGuard (and WorldEdit) are installed
+✅ Check the Java version (21 minimum)
+✅ Check the console logs
+```
+
+### Database won't connect
+
+```
+✅ Check the configuration in setting.yml
+✅ If it's MongoDB: verify the server is running and the URI is correct
+✅ If it's SQLite: verify write permissions in the plugin's folder
+```
+
+### Sizes don't persist
+
+```
+✅ Check that TYPE in setting.yml is correct (SQLITE or MONGODB)
+✅ Check that the file/collection is being created
+✅ Check for connection errors in the console
+```
+
+---
+
+## 🔧 Development
+
+### Project Structure
 
 ```
 src/main/java/dev/anhuar/
-├── SizeChange.java             # Clase principal del plugin
+├── SizeChange.java             # Plugin's main class
 ├── command/
-│   └── SizeCommand.java        # Comando /sizechange (Brigadier)
+│   └── SizeCommand.java        # /sizechange command (Brigadier)
 ├── db/
-│   ├── Database.java           # Interfaz de persistencia
-│   ├── SQLiteDB.java            # Implementación SQLite
-│   └── MongoDB.java             # Implementación MongoDB
+│   ├── Database.java           # Persistence interface
+│   ├── SQLiteDB.java            # SQLite implementation
+│   └── MongoDB.java             # MongoDB implementation
 ├── handler/
 │   ├── CommandHandler.java
-│   ├── DenyRegionHandler.java   # Enforcement de DENY-REGION / SIZE-REGION
+│   ├── DenyRegionHandler.java   # DENY-REGION / SIZE-REGION enforcement
 │   ├── ListenerHandler.java
 │   └── ManagerHandler.java
 ├── listener/
 │   └── PlayerListener.java      # Join/Quit
 ├── manager/
-│   ├── PlayerDataManager.java   # Gestión de DB, dirty tracking y auto-guardado
-│   ├── SizeManager.java         # Lectura/escritura de Attribute.SCALE
-│   ├── RegionManager.java       # Cache de DENY-REGION
-│   └── TemporarySizeManager.java # Tamaños temporales y su expiración
+│   ├── PlayerDataManager.java   # DB management, dirty tracking and auto-save
+│   ├── SizeManager.java         # Reads/writes Attribute.SCALE
+│   ├── RegionManager.java       # DENY-REGION cache
+│   └── TemporarySizeManager.java # Temporary sizes and their expiration
 ├── menu/
-│   ├── MenuHolder.java          # InventoryHolder + click handler funcional; incluye
-│   │                            # MenuHolder.MenuListener anidado (cancela clicks/drag)
-│   ├── MenuItemFactory.java     # Helpers compartidos: construye ItemStacks desde menu.yml
-│   ├── ChatInputManager.java    # Captura el próximo mensaje de chat de un jugador (con "cancel")
-│   ├── PlayerListMenu.java      # GUI paginado de /sizechange list (solo lectura)
-│   ├── RegionTypeMenu.java      # Selector DENY/SIZE que abre /sizechange config
-│   └── RegionConfigMenu.java    # Lista+agrega+quita (con confirmación) una colección de regiones
+│   ├── MenuHolder.java          # InventoryHolder + functional click handler; includes
+│   │                            # the nested MenuHolder.MenuListener (cancels clicks/drag)
+│   ├── MenuItemFactory.java     # Shared helpers: builds ItemStacks from menu.yml
+│   ├── ChatInputManager.java    # Captures a player's next chat message (with "cancel")
+│   ├── PlayerListMenu.java      # Paginated GUI for /sizechange list (read-only)
+│   ├── RegionTypeMenu.java      # DENY/SIZE selector opened by /sizechange config
+│   └── RegionConfigMenu.java    # Lists+adds+removes (with confirmation) one region collection
 ├── model/
 │   ├── PlayerData.java
 │   └── TemporarySizeData.java
@@ -474,11 +475,11 @@ src/main/java/dev/anhuar/
     └── MessageUtil.java
 ```
 
-### Compilar
+### Build
 
 ```bash
 ./gradlew clean shadowJar
-# JAR en: build/libs/SizeChange-1.0-SNAPSHOT.jar
+# JAR at: build/libs/SizeChange-1.0-SNAPSHOT.jar
 ```
 
 ### Tests
@@ -487,39 +488,39 @@ src/main/java/dev/anhuar/
 ./gradlew test
 ```
 
-Los tests (JUnit 5) cubren la lógica pura que no depende del servidor: parseo y
-formato de duraciones (`DurationUtil`) y el estado de los tamaños temporales
-(`PlayerData`, `TemporarySizeData`). La lógica que toca la API de Bukkit o
-WorldGuard no está cubierta y requiere pruebas en un servidor real.
+The tests (JUnit 5) cover the pure logic that doesn't depend on the server: duration
+parsing and formatting (`DurationUtil`) and temporary size state (`PlayerData`,
+`TemporarySizeData`). Logic that touches the Bukkit or WorldGuard API isn't covered
+and requires testing on a real server.
 
-Stack: Paper Dev Bundle `1.21.4-R0.1-SNAPSHOT`, Java 21 (toolchain), WorldGuard/WorldEdit `compileOnly`, Lombok. Las
-dependencias de runtime (Gson, MongoDB driver, SQLite JDBC) se declaran como `libraries` en `paper-plugin.yml` y las
-descarga Paper al arrancar.
+Stack: Paper Dev Bundle `1.21.4-R0.1-SNAPSHOT`, Java 21 (toolchain), WorldGuard/WorldEdit `compileOnly`, Lombok. Runtime
+dependencies (Gson, MongoDB driver, SQLite JDBC) are declared as `libraries` in `paper-plugin.yml` and downloaded by
+Paper on startup.
 
 ---
 
-## ✨ Características Avanzadas
+## ✨ Advanced Features
 
-### Auto-Limpieza
+### Auto-Cleanup
 
-- El cache de `DenyRegionHandler` y el dirty tracking de `PlayerDataManager` se limpian al desconectar un jugador.
+- `DenyRegionHandler`'s cache and `PlayerDataManager`'s dirty tracking are cleared when a player disconnects.
 
-### Manejo de Errores
+### Error Handling
 
-- Si WorldGuard no está instalado: el plugin se deshabilita en `onEnable`.
-- Si la conexión a la base de datos falla (timeout de 10s): el plugin se deshabilita con error claro en consola.
+- If WorldGuard isn't installed: the plugin disables itself in `onEnable`.
+- If the database connection fails (10s timeout): the plugin disables itself with a clear console error.
 
 ### Thread-Safety
 
-- Caches basados en `ConcurrentHashMap` (regiones, tamaños guardados, tamaños temporales, dirty tracking).
-- Toda interacción con la API de Bukkit se sincroniza al hilo principal desde callbacks asíncronos.
+- `ConcurrentHashMap`-based caches (regions, saved sizes, temporary sizes, dirty tracking).
+- Every interaction with the Bukkit API is synchronized to the main thread from async callbacks.
 
 ---
 
-## Licencia
+## License
 
-Este proyecto está bajo la [Licencia GPL-3.0](LICENSE).
+This project is licensed under the [GPL-3.0 License](LICENSE).
 
 ---
 
-**Autor:** Anhuar Dev
+**Author:** Anhuar Dev
