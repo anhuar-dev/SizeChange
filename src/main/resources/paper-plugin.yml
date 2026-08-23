@@ -1,0 +1,46 @@
+name: SizeChange
+version: '${version}'
+main: dev.anhuar.SizeChange
+api-version: '1.21'
+author: anhuar
+description: Plugin para modificar el tamaño de los jugadores con persistencia
+
+dependencies:
+  server:
+    WorldGuard:
+      load: BEFORE
+      required: true
+      join-classpath: true
+
+libraries:
+  - com.google.code.gson:gson:2.10.1
+  - org.mongodb:mongodb-driver-sync:4.11.1
+  - org.mongodb:mongodb-driver-core:4.11.1
+  - org.mongodb:bson:4.11.1
+  - org.xerial:sqlite-jdbc:3.47.1.0
+
+permissions:
+  sizechange.help:
+    description: Access to the /sizechange help command
+    default: op
+  sizechange.set:
+    description: Change a player's permanent size
+    default: op
+  sizechange.reset:
+    description: Reset a player's size to normal
+    default: op
+  sizechange.view:
+    description: View a player's current size
+    default: op
+  sizechange.temp:
+    description: Apply a temporary size to a player
+    default: op
+  sizechange.cleartemp:
+    description: Cancel a player's active temporary size
+    default: op
+  sizechange.reload:
+    description: Reload the plugin's configuration
+    default: op
+  sizechange.bypass:
+    description: Ignore DENY-REGION and SIZE-REGION size overrides
+    default: false

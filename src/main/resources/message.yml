@@ -1,10 +1,36 @@
-ERROR:
-  OFFLINE: "<red>Player not found. The player must be online.</red>"
-  INVALID-SIZE: "<red>Size must be between 0.1 and 10.</red>"
-  SET-SIZE-FAILED: "<red>Could not set size for %player%.</red>"
-  RESET-SIZE-FAILED: "<red>Could not reset size for %player%.</red>"
-  DENY-COMMAND: "<red>Command denied in this world/area.</red>"
+help:
+  - "<gold><bold>SizeChange Plugin</bold>"
+  - "<yellow>/size set <jugador> <tamaño> <gray>- Cambiar tamaño permanente"
+  - "<yellow>/size view <jugador> <gray>- Ver tamaño actual"
+  - "<yellow>/size reset <jugador> <gray>- Resetear tamaño a normal"
+  - "<yellow>/size temp <jugador> <tamaño> <duración> <gray>- Aplicar tamaño temporal"
+  - "<yellow>/size cleartemp <jugador> <gray>- Cancelar tamaño temporal"
+  - "<yellow>/size reload <gray>- Recargar configuración"
+  - "<gray>Tamaño válido: 0.0625 - 16.0"
+  - "<gray>Duraciones: 30s, 5m, 2h, 1d"
 
-SUCCESS:
-  SET-SIZE: "<green>Size of %player% set to %size%</green>"
-  RESET-SIZE: "<green>Size of %player% reset to default value.</green>"
+size-set: "<green>✓ Tamaño de <white>{player}</white> establecido a <white>{size}</white>"
+size-reset: "<green>✓ Tamaño de <white>{player}</white> reseteado a normal (1.0)"
+size-view:
+  - "<gold><bold>Información de Tamaño</bold></gold>"
+  - "<yellow>Jugador: <white>{player}</white>"
+  - "<yellow>Tamaño: <white>{size}</white>"
+size-view-temp:
+  - "<gold><bold>Información de Tamaño</bold></gold>"
+  - "<yellow>Jugador: <white>{player}</white>"
+  - "<yellow>Tamaño permanente: <white>{size}</white>"
+  - "<aqua>Tamaño temporal: <white>{temp_size}</white>"
+  - "<aqua>Tiempo restante: <white>{remaining}</white>"
+size-changed: "<yellow>Tu tamaño ha sido cambiado a <white>{size}</white>"
+
+temp-size-set: "<green>✓ Tamaño temporal de <white>{player}</white> establecido a <white>{size}</white> por <white>{duration}</white>"
+temp-size-applied: "<yellow>Se te ha aplicado un tamaño temporal de <white>{size}</white> por <white>{duration}</white>"
+temp-size-cleared: "<green>✓ Tamaño temporal de <white>{player}</white> cancelado y restaurado"
+temp-size-expired: "<yellow>Tu tamaño temporal ha expirado. Restaurado a <white>{size}</white>"
+temp-size-restored: "<yellow>Tu tamaño temporal se ha restaurado: <white>{size}</white>"
+
+player-not-found: "<red>✗ El jugador <white>{player}</white> no está conectado"
+invalid-duration: "<red>✗ Duración inválida. Usa formato: 30s, 5m, 2h, 1d"
+error-loading-data: "<red>✗ Error al cargar los datos del jugador. Intenta de nuevo."
+
+reload: "<green>✓ Configuración recargada exitosamente"
