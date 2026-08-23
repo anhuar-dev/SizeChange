@@ -23,20 +23,29 @@ permissions:
   sizechange.help:
     description: Access to the /sizechange help command
     default: op
-  sizechange.set:
+  sizechange.permanent.set:
     description: Change a player's permanent size
     default: op
-  sizechange.reset:
-    description: Reset a player's size to normal
+  sizechange.permanent.reset:
+    description: Reset a player's permanent size to normal
     default: op
-  sizechange.view:
-    description: View a player's current size
-    default: op
-  sizechange.temp:
+  sizechange.temporary.set:
     description: Apply a temporary size to a player
     default: op
-  sizechange.cleartemp:
+  sizechange.temporary.clear:
     description: Cancel a player's active temporary size
+    default: op
+  sizechange.view:
+    description: View a player's current size (permanent and temporary)
+    default: op
+  sizechange.list:
+    description: Open the paginated GUI listing online players' sizes
+    default: op
+  sizechange.info:
+    description: View plugin diagnostics (version, database, active temporary sizes)
+    default: op
+  sizechange.config:
+    description: Open the GUI to add/remove DENY-REGION and SIZE-REGION entries
     default: op
   sizechange.reload:
     description: Reload the plugin's configuration

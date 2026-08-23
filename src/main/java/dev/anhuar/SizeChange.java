@@ -19,7 +19,7 @@ public class SizeChange extends JavaPlugin {
     @Getter
     private static SizeChange instance;
 
-    private ConfigUtil setting, message;
+    private ConfigUtil setting, message, menu;
 
     private CommandHandler commandHandler;
     private ListenerHandler listenerHandler;
@@ -37,6 +37,7 @@ public class SizeChange extends JavaPlugin {
 
         setting = new ConfigUtil(this, "setting.yml");
         message = new ConfigUtil(this, "message.yml");
+        menu = new ConfigUtil(this, "menu.yml");
 
         managerHandler = new ManagerHandler(this);
         commandHandler = new CommandHandler(this);

@@ -26,12 +26,18 @@ public class MessageUtil {
             return;
         }
 
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            message = message.replace("{" + entry.getKey() + "}", entry.getValue());
-        }
-
-        Component component = ColorUtil.translate(message);
+        Component component = ColorUtil.translate(applyPlaceholders(message, placeholders));
         sender.sendMessage(component);
+    }
+
+    public static String applyPlaceholders(String text, Map<String, String> placeholders) {
+        if (text == null) {
+            return "";
+        }
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            text = text.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+        return text;
     }
 
     public static void sendMessage(CommandSender sender, String path) {
@@ -46,11 +52,7 @@ public class MessageUtil {
         List<String> messages = getMessageConfig().getStringList(path);
 
         for (String message : messages) {
-            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-                message = message.replace("{" + entry.getKey() + "}", entry.getValue());
-            }
-
-            Component component = ColorUtil.translate(message);
+            Component component = ColorUtil.translate(applyPlaceholders(message, placeholders));
             sender.sendMessage(component);
         }
     }

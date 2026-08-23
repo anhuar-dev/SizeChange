@@ -5,6 +5,7 @@ import dev.anhuar.manager.PlayerDataManager;
 import dev.anhuar.manager.RegionManager;
 import dev.anhuar.manager.SizeManager;
 import dev.anhuar.manager.TemporarySizeManager;
+import dev.anhuar.menu.ChatInputManager;
 import lombok.Getter;
 
 @Getter
@@ -16,6 +17,7 @@ public class ManagerHandler {
     private SizeManager sizeManager;
     private PlayerDataManager playerDataManager;
     private TemporarySizeManager temporarySizeManager;
+    private ChatInputManager chatInputManager;
 
     public ManagerHandler(SizeChange plugin) {
         this.plugin = plugin;
@@ -27,6 +29,7 @@ public class ManagerHandler {
         this.sizeManager = new SizeManager();
         this.playerDataManager = new PlayerDataManager(plugin);
         this.temporarySizeManager = new TemporarySizeManager(plugin);
+        this.chatInputManager = new ChatInputManager(plugin);
     }
 }
 

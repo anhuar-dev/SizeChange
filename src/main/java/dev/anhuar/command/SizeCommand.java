@@ -7,6 +7,8 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import dev.anhuar.SizeChange;
 import dev.anhuar.handler.DenyRegionHandler;
 import dev.anhuar.manager.SizeManager;
+import dev.anhuar.menu.PlayerListMenu;
+import dev.anhuar.menu.RegionTypeMenu;
 import dev.anhuar.util.DurationUtil;
 import dev.anhuar.util.MessageUtil;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
@@ -43,66 +45,87 @@ public class SizeCommand {
                             .requires(source -> source.getSender().hasPermission("sizechange.help"))
                             .executes(this::executeHelp)
                             .then(
-                                    literal("set")
-                                            .requires(source -> source.getSender().hasPermission("sizechange.set"))
+                                    literal("permanent")
                                             .then(
-                                                    argument("jugador", StringArgumentType.word())
-                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                    literal("set")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.permanent.set"))
                                                             .then(
-                                                                    argument("tamaño", DoubleArgumentType.doubleArg(0.0625, 16.0))
-                                                                            .executes(this::executeSet)
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .then(
+                                                                                    argument("size", DoubleArgumentType.doubleArg(0.0625, 16.0))
+                                                                                            .executes(this::executePermanentSet)
+                                                                            )
+                                                            )
+                                            )
+                                            .then(
+                                                    literal("reset")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.permanent.reset"))
+                                                            .then(
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .executes(this::executePermanentReset)
                                                             )
                                             )
                             )
                             .then(
-                                    literal("reset")
-                                            .requires(source -> source.getSender().hasPermission("sizechange.reset"))
+                                    literal("temporary")
                                             .then(
-                                                    argument("jugador", StringArgumentType.word())
-                                                            .suggests(PLAYER_SUGGESTIONS)
-                                                            .executes(this::executeReset)
+                                                    literal("set")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.temporary.set"))
+                                                            .then(
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .then(
+                                                                                    argument("size", DoubleArgumentType.doubleArg(0.0625, 16.0))
+                                                                                            .then(
+                                                                                                    argument("duration", StringArgumentType.word())
+                                                                                                            .suggests((context, builder) -> {
+                                                                                                                builder.suggest("30s");
+                                                                                                                builder.suggest("1m");
+                                                                                                                builder.suggest("5m");
+                                                                                                                builder.suggest("10m");
+                                                                                                                builder.suggest("1h");
+                                                                                                                return builder.buildFuture();
+                                                                                                            })
+                                                                                                            .executes(this::executeTemporarySet)
+                                                                                            )
+                                                                            )
+                                                            )
+                                            )
+                                            .then(
+                                                    literal("clear")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.temporary.clear"))
+                                                            .then(
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .executes(this::executeTemporaryClear)
+                                                            )
                                             )
                             )
                             .then(
                                     literal("view")
                                             .requires(source -> source.getSender().hasPermission("sizechange.view"))
                                             .then(
-                                                    argument("jugador", StringArgumentType.word())
+                                                    argument("player", StringArgumentType.word())
                                                             .suggests(PLAYER_SUGGESTIONS)
                                                             .executes(this::executeView)
                                             )
                             )
                             .then(
-                                    literal("temp")
-                                            .requires(source -> source.getSender().hasPermission("sizechange.temp"))
-                                            .then(
-                                                    argument("jugador", StringArgumentType.word())
-                                                            .suggests(PLAYER_SUGGESTIONS)
-                                                            .then(
-                                                                    argument("tamaño", DoubleArgumentType.doubleArg(0.0625, 16.0))
-                                                                            .then(
-                                                                                    argument("duracion", StringArgumentType.word())
-                                                                                            .suggests((context, builder) -> {
-                                                                                                builder.suggest("30s");
-                                                                                                builder.suggest("1m");
-                                                                                                builder.suggest("5m");
-                                                                                                builder.suggest("10m");
-                                                                                                builder.suggest("1h");
-                                                                                                return builder.buildFuture();
-                                                                                            })
-                                                                                            .executes(this::executeTemp)
-                                                                            )
-                                                            )
-                                            )
+                                    literal("list")
+                                            .requires(source -> source.getSender().hasPermission("sizechange.list"))
+                                            .executes(this::executeList)
                             )
                             .then(
-                                    literal("cleartemp")
-                                            .requires(source -> source.getSender().hasPermission("sizechange.cleartemp"))
-                                            .then(
-                                                    argument("jugador", StringArgumentType.word())
-                                                            .suggests(PLAYER_SUGGESTIONS)
-                                                            .executes(this::executeClearTemp)
-                                            )
+                                    literal("info")
+                                            .requires(source -> source.getSender().hasPermission("sizechange.info"))
+                                            .executes(this::executeInfo)
+                            )
+                            .then(
+                                    literal("config")
+                                            .requires(source -> source.getSender().hasPermission("sizechange.config"))
+                                            .executes(this::executeConfig)
                             )
                             .then(
                                     literal("reload")
@@ -122,7 +145,7 @@ public class SizeCommand {
     }
 
     private Player resolveTarget(CommandContext<CommandSourceStack> context, CommandSender sender) {
-        String targetName = context.getArgument("jugador", String.class);
+        String targetName = context.getArgument("player", String.class);
         Player target = Bukkit.getPlayer(targetName);
         if (target == null) {
             MessageUtil.sendMessage(sender, "player-not-found",
@@ -131,9 +154,9 @@ public class SizeCommand {
         return target;
     }
 
-    private int executeSet(CommandContext<CommandSourceStack> context) {
+    private int executePermanentSet(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
-        double size = context.getArgument("tamaño", Double.class);
+        double size = context.getArgument("size", Double.class);
 
         Player target = resolveTarget(context, sender);
         if (target == null) {
@@ -167,7 +190,7 @@ public class SizeCommand {
         return 1;
     }
 
-    private int executeReset(CommandContext<CommandSourceStack> context) {
+    private int executePermanentReset(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
 
         Player target = resolveTarget(context, sender);
@@ -237,10 +260,10 @@ public class SizeCommand {
         return 1;
     }
 
-    private int executeTemp(CommandContext<CommandSourceStack> context) {
+    private int executeTemporarySet(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
-        double size = context.getArgument("tamaño", Double.class);
-        String duration = context.getArgument("duracion", String.class);
+        double size = context.getArgument("size", Double.class);
+        String duration = context.getArgument("duration", String.class);
 
         Player target = resolveTarget(context, sender);
         if (target == null) {
@@ -287,7 +310,7 @@ public class SizeCommand {
         return 1;
     }
 
-    private int executeClearTemp(CommandContext<CommandSourceStack> context) {
+    private int executeTemporaryClear(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
 
         Player target = resolveTarget(context, sender);
@@ -302,11 +325,61 @@ public class SizeCommand {
         return 1;
     }
 
+    private int executeList(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+
+        if (!(sender instanceof Player player)) {
+            MessageUtil.sendMessage(sender, "gui-console-only");
+            return 0;
+        }
+
+        new PlayerListMenu(plugin).open(player, 0);
+        return 1;
+    }
+
+    private int executeConfig(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+
+        if (!(sender instanceof Player player)) {
+            MessageUtil.sendMessage(sender, "gui-console-only");
+            return 0;
+        }
+
+        new RegionTypeMenu(plugin).open(player);
+        return 1;
+    }
+
+    private int executeInfo(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+
+        String version = plugin.getPluginMeta().getVersion();
+        String database = plugin.getSetting().getString("DATABASE.TYPE");
+        int activeTemp = plugin.getManagerHandler().getTemporarySizeManager().activeCount();
+
+        int denyRegions = plugin.getManagerHandler().getRegionManager().getDenyRegions().size();
+        int sizeRegions = 0;
+        var sizeRegionSection = plugin.getSetting().getConfig().getConfigurationSection("SIZE-REGION");
+        if (sizeRegionSection != null) {
+            sizeRegions = sizeRegionSection.getKeys(false).size();
+        }
+
+        MessageUtil.sendMessage(sender, "info",
+                new MessageUtil.PlaceholderBuilder()
+                        .add("version", version)
+                        .add("database", database)
+                        .add("active_temp", activeTemp)
+                        .add("regions", denyRegions + sizeRegions)
+                        .build());
+
+        return 1;
+    }
+
     private int executeReload(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
 
         plugin.getSetting().reload();
         plugin.getMessage().reload();
+        plugin.getMenu().reload();
 
         plugin.getManagerHandler().getRegionManager().reloadDenyRegions();
         DenyRegionHandler.reloadSizeRegions();

@@ -156,6 +156,10 @@ public class TemporarySizeManager {
         return temporarySizes.containsKey(uuid);
     }
 
+    public int activeCount() {
+        return temporarySizes.size();
+    }
+
     public TemporarySizeData getTemporarySize(UUID uuid) {
         return temporarySizes.get(uuid);
     }
