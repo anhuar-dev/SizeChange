@@ -45,11 +45,11 @@ permissions:
     description: View plugin diagnostics (version, database, active temporary sizes)
     default: op
   sizechange.config:
-    description: Open the GUI to add/remove DENY-REGION and SIZE-REGION entries
+    description: Open the GUI to add/remove DENY/SIZE region and world overrides
     default: op
   sizechange.reload:
     description: Reload the plugin's configuration
     default: op
   sizechange.bypass:
-    description: Ignore DENY-REGION and SIZE-REGION size overrides
+    description: Ignore DENY/SIZE region and world size overrides
     default: false

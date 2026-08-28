@@ -43,15 +43,17 @@ list:
     name: "<red>No players online"
 
 region-config-select:
-  title: "<dark_gray>Configure Regions"
+  title: "<dark_gray>Configure Overrides"
   rows: 3
 
   fill:
     material: GRAY_STAINED_GLASS_PANE
     name: "<reset>"
 
+  # Red items = DENY (grouped on the left), blue items = SIZE (grouped on the
+  # right). Region + world of each kind sit next to each other.
   deny-button:
-    slot: 11
+    slot: 10
     material: BARRIER
     name: "<red>DENY-REGION"
     lore:
@@ -60,13 +62,33 @@ region-config-select:
       - ""
       - "<yellow>Click to manage"
 
+  world-deny-button:
+    slot: 11
+    material: RED_BED
+    name: "<red>DENY-WORLD"
+    lore:
+      - "<gray>Worlds that force"
+      - "<gray><white>1.0</white> size while inside"
+      - ""
+      - "<yellow>Click to manage"
+
   size-button:
     slot: 15
-    material: PAPER
-    name: "<yellow>SIZE-REGION"
+    material: BLUE_DYE
+    name: "<blue>SIZE-REGION"
     lore:
       - "<gray>Regions that force a"
       - "<gray>specific size on entry"
+      - ""
+      - "<yellow>Click to manage"
+
+  world-size-button:
+    slot: 16
+    material: LAPIS_LAZULI
+    name: "<blue>SIZE-WORLD"
+    lore:
+      - "<gray>Worlds that force a"
+      - "<gray>specific size while inside"
       - ""
       - "<yellow>Click to manage"
 
@@ -84,19 +106,19 @@ region-config:
 
   deny-entry:
     material: BARRIER
-    name: "<red>{region}"
+    name: "<red>{name}"
     lore:
-      - "<gray>Type: <white>DENY-REGION</white>"
-      - "<gray>Forces <white>1.0</white> size on entry"
+      - "<gray>Type: <white>{type}</white>"
+      - "<gray>Forces <white>1.0</white> size while inside"
       - ""
       - "<yellow>Click to remove (asks for confirmation)"
 
   size-entry:
     material: PAPER
-    name: "<yellow>{region}"
+    name: "<yellow>{name}"
     lore:
-      - "<gray>Type: <white>SIZE-REGION</white>"
-      - "<gray>Forces <white>{size}</white> size on entry"
+      - "<gray>Type: <white>{type}</white>"
+      - "<gray>Forces <white>{size}</white> size while inside"
       - ""
       - "<yellow>Click to remove (asks for confirmation)"
 

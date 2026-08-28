@@ -363,12 +363,16 @@ public class SizeCommand {
             sizeRegions = sizeRegionSection.getKeys(false).size();
         }
 
+        var worldManager = plugin.getManagerHandler().getWorldManager();
+        int worlds = worldManager.getDenyWorlds().size() + worldManager.getSizeWorlds().size();
+
         MessageUtil.sendMessage(sender, "info",
                 new MessageUtil.PlaceholderBuilder()
                         .add("version", version)
                         .add("database", database)
                         .add("active_temp", activeTemp)
                         .add("regions", denyRegions + sizeRegions)
+                        .add("worlds", worlds)
                         .build());
 
         return 1;
@@ -382,6 +386,7 @@ public class SizeCommand {
         plugin.getMenu().reload();
 
         plugin.getManagerHandler().getRegionManager().reloadDenyRegions();
+        plugin.getManagerHandler().getWorldManager().reload();
         DenyRegionHandler.reloadSizeRegions();
 
         MessageUtil.sendMessage(sender, "reload");

@@ -1,6 +1,6 @@
 # 🎮 SizeChange
 
-Change any player's size on the fly — permanently or for a set duration — with full WorldGuard region control and database persistence. Built on Paper's native `Attribute.SCALE`, so there's no resource pack or client mod required.
+Change any player's size on the fly — permanently or for a set duration — with full WorldGuard region and per-world control and database persistence. Built on Paper's native `Attribute.SCALE`, so there's no resource pack or client mod required.
 
 ---
 
@@ -22,11 +22,12 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - Commanded size changes (`set`/`reset`/`temporary set`/`temporary clear`) **smoothly animate** over ~0.8s with an ease-out curve instead of snapping instantly, with a configurable **sound + particle** on every change — toggle either one off, and pick your own sound/particle, via `ANIMATION`/`EFFECTS` in `setting.yml`; region-driven and automatic changes always stay instant and silent either way, so neither ever adds recurring cost
 - Runs on vanilla `Attribute.SCALE` — nothing to install client-side
 
-### 🗺️ WorldGuard Region Control
+### 🗺️ WorldGuard Region & World Control
 - **DENY-REGION** — forces everyone back to normal size (1.0x) while inside
 - **SIZE-REGION** — forces a specific size per region
-- A player's active temporary size is preserved across a region visit and resumes with the correct time remaining when they leave
-- `sizechange.bypass` lets staff ignore region enforcement entirely
+- **DENY-WORLD** / **SIZE-WORLD** — same, but for a whole world; a region the player stands in takes precedence
+- A player's active temporary size is preserved across a region/world visit and resumes with the correct time remaining when they leave
+- `sizechange.bypass` lets staff ignore region/world enforcement entirely
 
 ### 💾 Flexible Database
 - **SQLite** by default — zero setup, ideal for most servers
@@ -42,7 +43,7 @@ Change any player's size on the fly — permanently or for a set duration — wi
 ### 🛠️ Admin Experience
 - Brigadier-powered command with tab completion for player names and durations
 - `/sizechange list` opens a **paginated GUI** with player heads (real skins) instead of a wall of text — hover a head to see that player's permanent/temporary size and time remaining
-- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region name (and size, for SIZE-REGION) straight into chat — no more hand-editing YAML and `/sizechange reload`
+- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region/world name (and size, for the SIZE ones) straight into chat — no more hand-editing YAML and `/sizechange reload`
 - Both GUIs are **100% configurable** via `menu.yml` — title, size, fill item, navigation slots/materials, and every item's name/lore template, all editable, no code required
 - Fully customizable messages — MiniMessage tags, hex colors (`&#RRGGBB`), and legacy `&`/`§` codes all supported
 - A ready-to-copy **DeluxeMenus template** (`deluxemenu_template.yml`, generated on first run) — a self-service size picker players can open themselves, no permissions needed (requires the separate, optional DeluxeMenus plugin)
@@ -63,9 +64,9 @@ Root command: **`/sizechange`** (no aliases).
 | `/sizechange view <player>` | View current permanent + temporary size in one reply | `sizechange.view` |
 | `/sizechange list` | Open the paginated GUI of online players | `sizechange.list` |
 | `/sizechange info` | Plugin diagnostics (version, database, active temporaries) | `sizechange.info` |
-| `/sizechange config` | Open the GUI to add/remove DENY-REGION and SIZE-REGION entries | `sizechange.config` |
-| `/sizechange reload` | Reload config, messages, menu and regions | `sizechange.reload` |
-| — | Ignore DENY-REGION / SIZE-REGION enforcement | `sizechange.bypass` |
+| `/sizechange config` | Open the GUI to add/remove region and world overrides (DENY/SIZE) | `sizechange.config` |
+| `/sizechange reload` | Reload config, messages, menu, regions and worlds | `sizechange.reload` |
+| — | Ignore DENY / SIZE region and world enforcement | `sizechange.bypass` |
 
 Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g. `30s`, `5m`, `2h`, `1d`.
 

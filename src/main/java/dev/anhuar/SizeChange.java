@@ -35,7 +35,7 @@ public class SizeChange extends JavaPlugin {
             return;
         }
 
-        setting = new ConfigUtil(this, "setting.yml", "DENY-REGION", "SIZE-REGION");
+        setting = new ConfigUtil(this, "setting.yml", "DENY-REGION", "SIZE-REGION", "DENY-WORLD", "SIZE-WORLD");
         message = new ConfigUtil(this, "message.yml");
         menu = new ConfigUtil(this, "menu.yml");
 
@@ -51,6 +51,7 @@ public class SizeChange extends JavaPlugin {
         listenerHandler = new ListenerHandler(this);
 
         managerHandler.getRegionManager().reloadDenyRegions();
+        managerHandler.getWorldManager().reload();
 
         DenyRegionHandler.initialize(this);
 

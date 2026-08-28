@@ -21,9 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 // calling SizeManager.setSize() directly for an instant change. Can be turned off
 // entirely via ANIMATION.ENABLED in setting.yml — when disabled, this just applies
 // the target size instantly, same as SizeManager.setSize() would. Also plays a
-// configurable sound/particle on every real change it handles (EFFECTS.* in
-// setting.yml, its own independent toggle) — same scope as the animation itself,
-// so region crossings and automatic expiration never trigger it either.
+// configurable sound and/or particle on every real change it handles (EFFECTS.*
+// in setting.yml — SOUND and PARTICLE each with their own ENABLED/NAME) — same
+// scope as the animation itself, so region/world crossings and automatic
+// expiration never trigger it either.
 public class SizeAnimator {
 
     private static final int DURATION_TICKS = 16;
@@ -89,31 +90,32 @@ public class SizeAnimator {
 
     // IMPORTANT: independent of ANIMATION.ENABLED on purpose — a server might want
     // the instant snap but keep the feedback sound/particle, or the smooth motion
-    // without the noise. Fires once per real change, at the moment it starts
-    // (not once at the start and again at the end — a single cue reads cleaner
-    // than an echo 0.8s later).
+    // without the noise. Sound and particle are also independent of each other,
+    // each with its own EFFECTS.<x>.ENABLED toggle. Fires once per real change, at
+    // the moment it starts (not once at the start and again at the end — a single
+    // cue reads cleaner than an echo 0.8s later).
     private void playEffects(Player player) {
-        if (!plugin.getSetting().getConfig().getBoolean("EFFECTS.ENABLED", true)) {
-            return;
-        }
-
-        String soundName = plugin.getSetting().getString("EFFECTS.SOUND");
-        if (soundName != null && !soundName.isBlank()) {
-            try {
-                Sound sound = Sound.valueOf(soundName.trim().toUpperCase());
-                player.getWorld().playSound(player.getLocation(), sound, 1.0f, 1.0f);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid EFFECTS.SOUND in setting.yml: '" + soundName + "'");
+        if (plugin.getSetting().getConfig().getBoolean("EFFECTS.SOUND.ENABLED", true)) {
+            String soundName = plugin.getSetting().getString("EFFECTS.SOUND.NAME");
+            if (soundName != null && !soundName.isBlank()) {
+                try {
+                    Sound sound = Sound.valueOf(soundName.trim().toUpperCase());
+                    player.getWorld().playSound(player.getLocation(), sound, 1.0f, 1.0f);
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Invalid EFFECTS.SOUND.NAME in setting.yml: '" + soundName + "'");
+                }
             }
         }
 
-        String particleName = plugin.getSetting().getString("EFFECTS.PARTICLE");
-        if (particleName != null && !particleName.isBlank()) {
-            try {
-                Particle particle = Particle.valueOf(particleName.trim().toUpperCase());
-                player.getWorld().spawnParticle(particle, player.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3);
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Invalid EFFECTS.PARTICLE in setting.yml: '" + particleName + "'");
+        if (plugin.getSetting().getConfig().getBoolean("EFFECTS.PARTICLE.ENABLED", true)) {
+            String particleName = plugin.getSetting().getString("EFFECTS.PARTICLE.NAME");
+            if (particleName != null && !particleName.isBlank()) {
+                try {
+                    Particle particle = Particle.valueOf(particleName.trim().toUpperCase());
+                    player.getWorld().spawnParticle(particle, player.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3);
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Invalid EFFECTS.PARTICLE.NAME in setting.yml: '" + particleName + "'");
+                }
             }
         }
     }

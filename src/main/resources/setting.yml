@@ -25,13 +25,17 @@ ANIMATION:
   ENABLED: true
 
 # Sound + particle played once when a command actually changes a player's size
-# (same scope as ANIMATION above — never on region crossings or automatic
-# expiration). SOUND/PARTICLE must be valid org.bukkit.Sound / org.bukkit.Particle
-# names; an invalid one is skipped with a console warning, not a crash.
+# (same scope as ANIMATION above — never on region/world crossings or automatic
+# expiration). Sound and particle are fully independent: toggle each with its own
+# ENABLED, and set NAME to any valid org.bukkit.Sound / org.bukkit.Particle name.
+# An invalid NAME is skipped with a console warning, not a crash.
 EFFECTS:
-  ENABLED: true
-  SOUND: "ENTITY_SLIME_SQUISH"
-  PARTICLE: "POOF"
+  SOUND:
+    ENABLED: true
+    NAME: "ENTITY_SLIME_SQUISH"
+  PARTICLE:
+    ENABLED: true
+    NAME: "POOF"
 
 # List of WorldGuard region names. While a player is standing inside any of
 # these, their size is forced to 1.0 (normal), overriding both their
@@ -50,3 +54,22 @@ DENY-REGION:
 SIZE-REGION:
   green: 0.1
   yellow: 2.0
+
+# List of world names. While a player is in any of these worlds their size is
+# forced to 1.0 (normal) — exactly like DENY-REGION, but for a whole world:
+# visual-only, the real permanent/temporary size is hidden (never lost, never
+# written to the database) and restored on leaving the world. A DENY-REGION /
+# SIZE-REGION the player is standing in always takes precedence over the world.
+# Manage this list in-game with /sizechange config instead of editing by hand.
+# Example:
+#   DENY-WORLD:
+#     - "world_nether"
+DENY-WORLD: []
+
+# Map of world name -> forced size, applied the same way as DENY-WORLD above but
+# with a specific size per world instead of always 1.0. Regions still take
+# precedence. Also manageable in-game via /sizechange config.
+# Example:
+#   SIZE-WORLD:
+#     world_the_end: 0.5
+SIZE-WORLD: {}

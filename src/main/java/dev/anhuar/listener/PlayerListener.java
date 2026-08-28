@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -70,11 +71,26 @@ public class PlayerListener implements Listener {
                 // sometimes miss the region the player is actually standing in.
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     if (player.isOnline()) {
-                        DenyRegionHandler.applyRegionSizeIfInRegion(player);
+                        DenyRegionHandler.applyOverrideIfApplicable(player);
                     }
                 }, 60L);
             });
         });
+    }
+
+    // A world change fires no WorldGuard boundary event, so DENY-WORLD /
+    // SIZE-WORLD enforcement (and the set of applicable regions) has to be
+    // recomputed here. One tick's grace lets the teleport's own position/region
+    // bookkeeping — and any WorldGuard boundary event for the same move — settle
+    // first, so recomputeOverride reads the final destination state.
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+        Player player = event.getPlayer();
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) {
+                DenyRegionHandler.recomputeOverride(player);
+            }
+        }, 2L);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

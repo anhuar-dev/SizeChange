@@ -1,6 +1,6 @@
 # 🎮 SizeChange
 
-Change any player's size on the fly — permanently or for a set duration — with full WorldGuard region control and database persistence. Built on Paper's native `Attribute.SCALE`, so there's no resource pack or client mod required.
+Change any player's size on the fly — permanently or for a set duration — with full WorldGuard region and per-world control and database persistence. Built on Paper's native `Attribute.SCALE`, so there's no resource pack or client mod required.
 
 ---
 
@@ -20,11 +20,14 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - Commanded size changes (`set`/`reset`/`temporary set`/`temporary clear`) **smoothly animate** over ~0.8s with an ease-out curve instead of snapping instantly, with a configurable **sound + particle** on every change — toggle either one off, and pick your own sound/particle, via `ANIMATION`/`EFFECTS` in `setting.yml`; region-driven and automatic changes always stay instant and silent either way, so neither ever adds recurring cost
 - Runs on vanilla `Attribute.SCALE` — nothing to install client-side
 
-### 🗺️ WorldGuard Region Control
+### 🗺️ WorldGuard Region & World Control
 - **DENY-REGION** — forces everyone back to normal size (1.0x) while inside
 - **SIZE-REGION** — forces a specific size per region
-- A player's active temporary size is preserved across a region visit and resumes with the correct time remaining when they leave
-- `sizechange.bypass` lets staff ignore region enforcement entirely
+- **DENY-WORLD** — forces normal size (1.0x) while in the world
+- **SIZE-WORLD** — forces a specific size while in the world
+- Worlds behave exactly like regions: visual-only while inside, never written to the database, restored on leaving. A region the player is standing in always takes precedence over the world
+- A player's active temporary size is preserved across a region/world visit and resumes with the correct time remaining when they leave
+- `sizechange.bypass` lets staff ignore region/world enforcement entirely
 
 ### 💾 Flexible Database
 - **SQLite** by default — zero setup, ideal for most servers
@@ -40,7 +43,7 @@ Change any player's size on the fly — permanently or for a set duration — wi
 ### 🛠️ Admin Experience
 - Brigadier-powered command with tab completion for player names and durations
 - `/sizechange list` opens a **paginated GUI** with player heads (real skins) instead of a wall of text — hover a head to see that player's permanent/temporary size and time remaining
-- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region name (and size, for SIZE-REGION) straight into chat — no more hand-editing YAML and `/sizechange reload`
+- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region/world name (and size, for the SIZE ones) straight into chat — no more hand-editing YAML and `/sizechange reload`
 - Both GUIs are **100% configurable** via `menu.yml` — title, size, fill item, navigation slots/materials, and every item's name/lore template, all editable, no code required
 - Fully customizable messages — MiniMessage tags, hex colors (`&#RRGGBB`), and legacy `&`/`§` codes all supported
 - A ready-to-copy **DeluxeMenus template** (`deluxemenu_template.yml`, generated on first run) — a self-service size picker players can open themselves, no permissions needed (requires the separate, optional DeluxeMenus plugin)
@@ -59,9 +62,9 @@ Root command: **`/sizechange`** (no aliases).
 | `/sizechange view <player>` | View current permanent + temporary size in one reply | `sizechange.view` |
 | `/sizechange list` | Open the paginated GUI of online players | `sizechange.list` |
 | `/sizechange info` | Plugin diagnostics (version, database, active temporaries) | `sizechange.info` |
-| `/sizechange config` | Open the GUI to add/remove DENY-REGION and SIZE-REGION entries | `sizechange.config` |
-| `/sizechange reload` | Reload config, messages, menu and regions | `sizechange.reload` |
-| — | Ignore DENY-REGION / SIZE-REGION enforcement | `sizechange.bypass` |
+| `/sizechange config` | Open the GUI to add/remove region and world overrides (DENY/SIZE) | `sizechange.config` |
+| `/sizechange reload` | Reload config, messages, menu, regions and worlds | `sizechange.reload` |
+| — | Ignore DENY / SIZE region and world enforcement | `sizechange.bypass` |
 
 Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g. `30s`, `5m`, `2h`, `1d`.
 
@@ -96,10 +99,11 @@ All three config files (`setting.yml`, `message.yml`, `menu.yml`) **auto-update 
 new plugin version: on startup, any key a newer version introduced that your existing file doesn't have yet gets
 added automatically (with its default value) — including a new key added *inside* a section you already have (e.g.
 if a future update adds a new option under `ANIMATION`), not just entirely new top-level sections. Anything you've
-already set is never touched or overwritten. The one exception is `DENY-REGION`/`SIZE-REGION`: those hold your own
-region names, not a fixed schema, so they're only ever filled in if the whole section is missing — an update can't
-tell "a new key this version added" apart from "an entry you deliberately deleted," so it never edits them once
-they exist.
+already set is never touched or overwritten. The one exception is `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD`:
+those hold your own region and world names, not a fixed schema, so they're only ever filled in if the whole section
+is missing — an update can't tell "a new key this version added" apart from "an entry you deliberately deleted," so
+it never edits them once they exist. (They ship empty, so an update can never silently start forcing a size in a
+world you didn't configure.)
 
 ### `setting.yml` - Main Configuration
 
@@ -123,11 +127,15 @@ ANIMATION:
   ENABLED: true
 
 # Sound + particle played once when a command actually changes a player's size.
-# SOUND/PARTICLE must be valid org.bukkit.Sound / org.bukkit.Particle names.
+# Sound and particle are independent — each has its own ENABLED toggle. NAME must
+# be a valid org.bukkit.Sound / org.bukkit.Particle name.
 EFFECTS:
-  ENABLED: true
-  SOUND: "ENTITY_SLIME_SQUISH"
-  PARTICLE: "POOF"
+  SOUND:
+    ENABLED: true
+    NAME: "ENTITY_SLIME_SQUISH"
+  PARTICLE:
+    ENABLED: true
+    NAME: "POOF"
 
 # WorldGuard region names. Size is forced to 1.0 (normal) while a player is
 # standing inside any of these — their permanent/temporary size isn't lost,
@@ -141,11 +149,23 @@ DENY-REGION:
 SIZE-REGION:
   mini_game: 0.3   # Players shrink
   giant_zone: 3.0  # Players grow
+
+# World names. Size forced to 1.0 (normal) while a player is in the world —
+# same visual-only behavior as DENY-REGION, but world-wide. A region the
+# player stands in still takes precedence. Ships empty; manageable in-game
+# via /sizechange config.
+DENY-WORLD:
+  - "world_nether"
+
+# World name -> forced size, same behavior as DENY-WORLD but with a specific
+# value per world instead of always 1.0. Ships empty.
+SIZE-WORLD:
+  minigames_lobby: 0.5
 ```
 
 ### `message.yml` - Customizable Messages
 
-Available placeholders (vary by key): `{player}`, `{size}`, `{temp_size}`, `{duration}`, `{remaining}`, `{version}`, `{database}`, `{active_temp}`, `{regions}`, `{region}`.
+Available placeholders (vary by key): `{player}`, `{size}`, `{temp_size}`, `{duration}`, `{remaining}`, `{version}`, `{database}`, `{active_temp}`, `{regions}`, `{worlds}`, `{region}`, `{world}`, `{name}`.
 
 ```yaml
 help:
@@ -179,11 +199,15 @@ info:
   - "<yellow>Configured regions: <white>{regions}</white>"
 
 config-add-prompt-name: "<yellow>Type the region name."
+config-add-prompt-world: "<yellow>Type the world name."
 config-add-prompt-size: "<yellow>Type the size (0.0625 - 16.0)."
-config-add-duplicate: "<red>✗ Region <white>{region}</white> is already configured."
+config-add-duplicate: "<red>✗ <white>{name}</white> is already configured."
 config-add-region-not-found-warning: "<gray>⚠ No region named <white>{region}</white> was found in any loaded world. It was saved anyway — double-check the name."
+config-add-world-not-found-warning: "<gray>⚠ No world named <white>{world}</white> is loaded. It was saved anyway — double-check the name."
 config-deny-added: "<green>✓ '{region}' added to DENY-REGION."
 config-size-added: "<green>✓ '{region}' added to SIZE-REGION with size {size}."
+config-world-deny-added: "<green>✓ '{world}' added to DENY-WORLD."
+config-world-size-added: "<green>✓ '{world}' added to SIZE-WORLD with size {size}."
 
 reload: "<green>✓ Configuration reloaded successfully"
 ```
@@ -234,38 +258,50 @@ only lists online players — no new database queries.
 
 Unlike the one above, this flow **does write to `setting.yml`**, and has two screens:
 
-1. **`region-config-select`** — the selector opened by `/sizechange config`: two buttons, `deny-button`
-   and `size-button`. Picking one opens `region-config` already scoped to that collection — the rest of
-   the flow (add, list, remove) already knows whether you're managing `DENY-REGION` or `SIZE-REGION`, so
-   it never asks for the type again.
-2. **`region-config`** — the paginated list of that collection (templates `deny-entry`/`size-entry` with
-   placeholders `{region}`/`{size}`; the title supports `{type}` → "DENY-REGION" or "SIZE-REGION"). Clicking
-   an existing entry opens a **confirmation screen** (`confirm-delete`: `cancel`/`confirm` buttons, also
-   configurable) before removing it — avoiding a misclick wiping out a configured region. The `back` button
-   returns to the selector. The `add` button (configurable slot) triggers a **chat** flow: it asks for the
-   region name (validates it doesn't already exist in either list — DENY or SIZE, regardless of which one
-   you're editing —, and rejects empty names or names with a dot `.`, since Bukkit's `ConfigurationSection`
-   treats the dot as a path separator), and if you're in the SIZE menu, it also asks for the numeric value
-   (`0.0625`–`16.0`). At any step you can type `cancel` to abort.
+1. **`region-config-select`** — the selector opened by `/sizechange config`: four buttons, `deny-button`,
+   `size-button`, `world-deny-button` and `world-size-button`. Picking one opens `region-config` already
+   scoped to that collection — the rest of the flow (add, list, remove) already knows whether you're
+   managing `DENY-REGION`, `SIZE-REGION`, `DENY-WORLD` or `SIZE-WORLD`, so it never asks for the type again.
+   (A missing button section is just skipped — on an existing `menu.yml` the two world buttons are added
+   automatically by the config auto-update.)
+2. **`region-config`** — the paginated list of that collection (templates `deny-entry`/`size-entry`, shared
+   by the region and world collections, with placeholders `{name}`/`{size}` — `{region}`/`{world}` are kept
+   as aliases; the title supports `{type}` → the setting.yml key). Clicking an existing entry opens a
+   **confirmation screen** (`confirm-delete`: `cancel`/`confirm` buttons, also configurable) before removing
+   it — avoiding a misclick wiping out a configured entry. The `back` button returns to the selector. The
+   `add` button (configurable slot) triggers a **chat** flow: it asks for the region/world name (validates
+   it doesn't already exist in the sibling list — DENY or SIZE within the same region/world scope — and
+   rejects empty names or names with a dot `.`, since Bukkit's `ConfigurationSection` treats the dot as a
+   path separator), and for the SIZE collections it also asks for the numeric value (`0.0625`–`16.0`). At
+   any step you can type `cancel` to abort.
 
-After saving or removing, `regionManager.reloadDenyRegions()`/`DenyRegionHandler.reloadSizeRegions()` is
-called automatically — the change applies live, no need for `/sizechange reload`. If the typed name
-doesn't match any real WorldGuard region in the loaded worlds, it still saves but warns with
-`config-add-region-not-found-warning` (useful for catching typos without blocking a legitimate save, e.g.
-if the region belongs to a world that isn't loaded yet).
+After saving or removing, the matching cache is reloaded automatically
+(`regionManager.reloadDenyRegions()` / `DenyRegionHandler.reloadSizeRegions()` / `worldManager.reload()`) —
+the change applies live, no need for `/sizechange reload`. If the typed name doesn't match a real WorldGuard
+region (regions) or a loaded world (worlds), it still saves but warns with
+`config-add-region-not-found-warning` / `config-add-world-not-found-warning` (useful for catching typos
+without blocking a legitimate save, e.g. a region in a world that isn't loaded yet).
 
 ```yaml
 region-config-select:
-  title: "<dark_gray>Configure Regions"
+  title: "<dark_gray>Configure Overrides"
   rows: 3
-  deny-button:
-    slot: 11
+  deny-button:          # red items = DENY (left)
+    slot: 10
     material: BARRIER
     name: "<red>DENY-REGION"
-  size-button:
+  world-deny-button:
+    slot: 11
+    material: RED_BED
+    name: "<red>DENY-WORLD"
+  size-button:          # blue items = SIZE (right)
     slot: 15
-    material: PAPER
-    name: "<yellow>SIZE-REGION"
+    material: BLUE_DYE
+    name: "<blue>SIZE-REGION"
+  world-size-button:
+    slot: 16
+    material: LAPIS_LAZULI
+    name: "<blue>SIZE-WORLD"
 
 region-config:
   title: "<dark_gray>{type} <gray>({page}/{total_pages})"
@@ -273,16 +309,16 @@ region-config:
 
   deny-entry:
     material: BARRIER
-    name: "<red>{region}"
+    name: "<red>{name}"
     lore:
-      - "<gray>Forces <white>1.0</white> size on entry"
+      - "<gray>Forces <white>1.0</white> size while inside"
       - "<yellow>Click to remove (asks for confirmation)"
 
   size-entry:
     material: PAPER
-    name: "<yellow>{region}"
+    name: "<yellow>{name}"
     lore:
-      - "<gray>Forces <white>{size}</white> size on entry"
+      - "<gray>Forces <white>{size}</white> size while inside"
       - "<yellow>Click to remove (asks for confirmation)"
 
   add:
@@ -357,24 +393,33 @@ menu will.
   in `setting.yml`. WorldGuard region crossings, automatic temporary-size expiration, and the join-time restore all
   keep calling `SizeManager.setSize()` directly (instant, no task) regardless of that setting — those can fire far
   more often than a player types a command, so they never animate even when the toggle is on.
-- **Scoped effects**: same four command-triggered changes also play a sound + particle once per change
-  (`EFFECTS.SOUND`/`EFFECTS.PARTICLE` in `setting.yml`, its own independent `EFFECTS.ENABLED` toggle — you can keep
-  the smooth motion without the noise, or vice versa). An invalid sound/particle name logs a console warning and is
-  skipped rather than crashing anything.
+- **Scoped effects**: same four command-triggered changes also play a sound and/or particle once per change.
+  `EFFECTS.SOUND` and `EFFECTS.PARTICLE` in `setting.yml` are fully independent — each has its own `ENABLED` toggle
+  and `NAME`, and the whole `EFFECTS` block is independent of `ANIMATION.ENABLED`, so any combination works (smooth
+  motion + only a particle, instant snap + only a sound, nothing at all, …). An invalid `NAME` logs a console
+  warning and is skipped rather than crashing anything. An older single-toggle `EFFECTS` block
+  (`ENABLED` + string `SOUND`/`PARTICLE`) is migrated to the new shape automatically on first load, preserving both
+  the on/off state and any custom names.
 
-### WorldGuard Regions
+### WorldGuard Regions & Worlds
 
-- **Boundary-crossing detection**: triggered via a WorldGuard session `Handler` (`onCrossBoundary`), not checked
-  every tick.
-- **Applied on join**: if the player is already inside a DENY/SIZE region when they join, it's applied 3 seconds
-  after join.
-- **Static region cache**: the `DENY-REGION`/`SIZE-REGION` configuration is cached in memory and reloaded with
-  `/sizechange reload` (which also reloads `setting.yml`, `message.yml` and `menu.yml`).
+- **Boundary-crossing detection**: region crossings are triggered via a WorldGuard session `Handler`
+  (`onCrossBoundary`), not checked every tick.
+- **World changes**: a world change fires no WorldGuard boundary event, so `PlayerListener` handles
+  `PlayerChangedWorldEvent` and recomputes the override 2 ticks later (`DenyRegionHandler.recomputeOverride`),
+  applying or restoring as needed.
+- **Precedence**: a DENY/SIZE region the player physically stands in always wins over a DENY/SIZE world —
+  the world override only applies when no relevant region does (`DenyRegionHandler.resolveOverrideSize`).
+- **Applied on join**: if the player is already inside a DENY/SIZE region *or* world when they join, it's
+  applied 3 seconds after join (`DenyRegionHandler.applyOverrideIfApplicable`).
+- **Caches**: `DENY-REGION` (RegionManager), `SIZE-REGION` (DenyRegionHandler) and `DENY-WORLD`/`SIZE-WORLD`
+  (WorldManager) are cached in memory and reloaded with `/sizechange reload` (which also reloads
+  `setting.yml`, `message.yml` and `menu.yml`).
 - **Automatic restore on exit**: retrieves the saved size (permanent or temporary with remaining time) and
-  reapplies it.
-- **No persistence**: size changes caused by regions are never written to the database.
-- **Expiration inside a region**: if a temporary size expires while the player is still inside a DENY/SIZE region,
-  the region's forced size stays in effect instead of immediately restoring the original.
+  reapplies it — unless a lower-precedence override (a world, when leaving a region) still applies.
+- **No persistence**: size changes caused by regions or worlds are never written to the database.
+- **Expiration inside a region/world**: if a temporary size expires while the player is still inside a
+  DENY/SIZE region or world, the forced size stays in effect instead of immediately restoring the original.
 
 ---
 
@@ -460,7 +505,20 @@ Player leaves "mini_game"
   → Retrieves the cached size
   → If they had an active temporary size, restores it with the recalculated remaining time
   → Otherwise, restores the permanent size from the DB
+  → (If they're now in a DENY/SIZE world, that world's forced size applies instead)
   → Does NOT modify the database
+```
+
+### WorldGuard Worlds
+
+```
+Player teleports into a DENY-WORLD / SIZE-WORLD
+  → PlayerChangedWorldEvent → recompute 2 ticks later
+  → No relevant region here → world's forced size applied (visual only)
+
+Player leaves the world
+  → Recompute → no override left → restore temporary (with remaining time) or permanent size
+  → Never touches the database
 ```
 
 ---
@@ -508,16 +566,17 @@ src/main/java/dev/anhuar/
 │   └── MongoDB.java             # MongoDB implementation
 ├── handler/
 │   ├── CommandHandler.java
-│   ├── DenyRegionHandler.java   # DENY-REGION / SIZE-REGION enforcement
+│   ├── DenyRegionHandler.java   # DENY/SIZE region + world enforcement, precedence, restore
 │   ├── ListenerHandler.java
 │   └── ManagerHandler.java
 ├── listener/
-│   └── PlayerListener.java      # Join/Quit
+│   └── PlayerListener.java      # Join/Quit/ChangedWorld
 ├── manager/
 │   ├── PlayerDataManager.java   # DB management, dirty tracking and auto-save
 │   ├── SizeManager.java         # Reads/writes Attribute.SCALE (instant)
 │   ├── SizeAnimator.java        # Smooth ~0.5s interpolation, command-triggered changes only
 │   ├── RegionManager.java       # DENY-REGION cache
+│   ├── WorldManager.java        # DENY-WORLD / SIZE-WORLD cache
 │   └── TemporarySizeManager.java # Temporary sizes and their expiration
 ├── menu/
 │   ├── MenuHolder.java          # InventoryHolder + functional click handler; includes
@@ -525,8 +584,8 @@ src/main/java/dev/anhuar/
 │   ├── MenuItemFactory.java     # Shared helpers: builds ItemStacks from menu.yml
 │   ├── ChatInputManager.java    # Captures a player's next chat message (with "cancel")
 │   ├── PlayerListMenu.java      # Paginated GUI for /sizechange list (read-only)
-│   ├── RegionTypeMenu.java      # DENY/SIZE selector opened by /sizechange config
-│   └── RegionConfigMenu.java    # Lists+adds+removes (with confirmation) one region collection
+│   ├── RegionTypeMenu.java      # DENY/SIZE region+world selector opened by /sizechange config
+│   └── RegionConfigMenu.java    # Lists+adds+removes (with confirmation) one region/world collection
 ├── model/
 │   ├── PlayerData.java
 │   └── TemporarySizeData.java

@@ -72,11 +72,52 @@ public class ConfigUtil {
 
         reload();
 
+        migrateLegacyKeys();
+
         mergeMissingDefaults();
     }
 
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
+    }
+
+    // One-off renames/reshapes of keys whose old form would otherwise be left
+    // orphaned (or get clobbered by mergeMissingDefaults, which can't turn a
+    // scalar into a section without losing the scalar's value). Each block is a
+    // no-op once the file is already on the new shape, and harmless for the
+    // config files that never had the old key, so this can run unconditionally
+    // on every load.
+    private void migrateLegacyKeys() {
+        boolean changed = false;
+
+        // EFFECTS: one shared ENABLED + string SOUND/PARTICLE
+        //   ->  EFFECTS.SOUND.{ENABLED,NAME} + EFFECTS.PARTICLE.{ENABLED,NAME}
+        // so sound and particle can be toggled independently.
+        if (config.isString("EFFECTS.SOUND") || config.isString("EFFECTS.PARTICLE")) {
+            boolean legacyEnabled = config.getBoolean("EFFECTS.ENABLED", true);
+            String soundName = config.getString("EFFECTS.SOUND");
+            String particleName = config.getString("EFFECTS.PARTICLE");
+
+            config.set("EFFECTS.ENABLED", null);
+            config.set("EFFECTS.SOUND", null);
+            config.set("EFFECTS.PARTICLE", null);
+
+            config.set("EFFECTS.SOUND.ENABLED", legacyEnabled);
+            if (soundName != null) {
+                config.set("EFFECTS.SOUND.NAME", soundName);
+            }
+            config.set("EFFECTS.PARTICLE.ENABLED", legacyEnabled);
+            if (particleName != null) {
+                config.set("EFFECTS.PARTICLE.NAME", particleName);
+            }
+
+            changed = true;
+            plugin.getLogger().info("Migrated legacy EFFECTS keys to per-effect toggles in " + filePath);
+        }
+
+        if (changed) {
+            save();
+        }
     }
 
     private void mergeMissingDefaults() {

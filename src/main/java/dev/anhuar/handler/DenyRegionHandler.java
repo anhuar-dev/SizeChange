@@ -16,6 +16,7 @@ import dev.anhuar.manager.PlayerDataManager;
 import dev.anhuar.manager.RegionManager;
 import dev.anhuar.manager.SizeManager;
 import dev.anhuar.manager.TemporarySizeManager;
+import dev.anhuar.manager.WorldManager;
 import dev.anhuar.model.TemporarySizeData;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -43,6 +44,7 @@ public class DenyRegionHandler extends Handler {
 
     private static SizeChange plugin;
     private static RegionManager regionManager;
+    private static WorldManager worldManager;
     private static SizeManager sizeManager;
     private static PlayerDataManager dataManager;
 
@@ -72,6 +74,7 @@ public class DenyRegionHandler extends Handler {
     public static void initialize(SizeChange pluginInstance) {
         plugin = pluginInstance;
         regionManager = plugin.getManagerHandler().getRegionManager();
+        worldManager = plugin.getManagerHandler().getWorldManager();
         sizeManager = plugin.getManagerHandler().getSizeManager();
         dataManager = plugin.getManagerHandler().getPlayerDataManager();
         reloadSizeRegions();
@@ -141,36 +144,107 @@ public class DenyRegionHandler extends Handler {
         return sorted;
     }
 
-    public static void applyRegionSizeIfInRegion(Player player) {
+    // IMPORTANT: resolution order is region-first, then world. A DENY-REGION /
+    // SIZE-REGION the player is physically standing in is always more specific
+    // than the world they're in, so it wins — the world override only applies
+    // when no relevant region does. Returns null when nothing overrides the
+    // player's real size. The region lookup is a direct spatial query on the
+    // container (not the player's WG session), so this is safe to call the
+    // moment a player joins or changes world, before the session is rebuilt.
+    private static Double resolveOverrideSize(Player player) {
+        World adaptWorld = BukkitAdapter.adapt(player.getWorld());
+        var container = WorldGuard.getInstance().getPlatform().getRegionContainer().get(adaptWorld);
+
+        if (container != null) {
+            ApplicableRegionSet regions = container.getApplicableRegions(BlockVector3.at(
+                    player.getLocation().getX(),
+                    player.getLocation().getY(),
+                    player.getLocation().getZ()));
+
+            for (ProtectedRegion region : byPriorityDesc(regions.getRegions())) {
+                String regionId = region.getId();
+
+                if (regionManager.isDenyRegion(regionId)) {
+                    return 1.0;
+                }
+
+                Double regionSize = sizeRegionsCache.get(regionId);
+                if (regionSize != null) {
+                    return regionSize;
+                }
+            }
+        }
+
+        return worldManager.getOverrideSize(player.getWorld().getName());
+    }
+
+    // Called ~3s after join (see PlayerListener): if the player logged in already
+    // inside a DENY/SIZE region or a DENY/SIZE world, apply that override now.
+    // Only ever applies — never restores — because join has already set the
+    // player's real size at this point.
+    public static void applyOverrideIfApplicable(Player player) {
         if (plugin == null || regionManager == null || sizeManager == null) return;
 
         if (player.hasPermission(BYPASS_PERMISSION)) return;
 
+        Double target = resolveOverrideSize(player);
+        if (target != null) {
+            overriddenPlayers.add(player.getUniqueId());
+            sizeManager.setSize(player, target);
+        }
+    }
+
+    // Recompute the player's override from scratch and either apply it or, if
+    // nothing overrides them any more, restore their real (temporary/permanent)
+    // size. Used on world change, where no WorldGuard boundary event fires but
+    // the applicable DENY/SIZE world — and the set of regions — can both change.
+    public static void recomputeOverride(Player player) {
+        if (plugin == null || regionManager == null || sizeManager == null) return;
+
         UUID uuid = player.getUniqueId();
 
-        World adaptWorld = BukkitAdapter.adapt(player.getWorld());
-        ApplicableRegionSet regions = WorldGuard.getInstance()
-                .getPlatform().getRegionContainer().get(adaptWorld)
-                .getApplicableRegions(BlockVector3.at(
-                        player.getLocation().getX(),
-                        player.getLocation().getY(),
-                        player.getLocation().getZ()));
+        if (player.hasPermission(BYPASS_PERMISSION)) {
+            overriddenPlayers.remove(uuid);
+            return;
+        }
 
-        for (ProtectedRegion region : byPriorityDesc(regions.getRegions())) {
-            String regionId = region.getId();
+        Double target = resolveOverrideSize(player);
+        if (target != null) {
+            overriddenPlayers.add(uuid);
+            sizeManager.setSize(player, target);
+            return;
+        }
 
-            if (regionManager.isDenyRegion(regionId)) {
-                overriddenPlayers.add(uuid);
-                sizeManager.setSize(player, 1.0);
-                return;
+        if (overriddenPlayers.remove(uuid)) {
+            restoreNonOverrideSize(player);
+        }
+    }
+
+    // Restore whatever the player's size should be once no override applies:
+    // their active temporary size (re-armed with the correct time remaining) if
+    // one is still running, otherwise their permanent size from the DB. Extracted
+    // from onCrossBoundary's exit branch so world changes restore identically.
+    private static void restoreNonOverrideSize(Player player) {
+        UUID uuid = player.getUniqueId();
+        TemporarySizeManager tempManager = plugin.getManagerHandler().getTemporarySizeManager();
+
+        if (tempManager.hasTemporarySize(uuid)) {
+            TemporarySizeData tempData = tempManager.getTemporarySize(uuid);
+            long remainingTime = tempData.getRemainingTime();
+
+            if (remainingTime > 0) {
+                double activeTempSize = tempData.getTemporarySize();
+                double trueOriginalSize = tempData.getOriginalSize();
+
+                sizeManager.setSize(player, activeTempSize);
+
+                tempManager.cancelTemporarySize(uuid);
+                tempManager.setTemporarySize(player, activeTempSize, trueOriginalSize, remainingTime, false);
+            } else {
+                restorePermanentSizeAsync(uuid, player);
             }
-
-            Double regionSize = sizeRegionsCache.get(regionId);
-            if (regionSize != null) {
-                overriddenPlayers.add(uuid);
-                sizeManager.setSize(player, regionSize);
-                return;
-            }
+        } else {
+            restorePermanentSizeAsync(uuid, player);
         }
     }
 
@@ -195,8 +269,6 @@ public class DenyRegionHandler extends Handler {
         if (cachedPlayer.hasPermission(BYPASS_PERMISSION)) {
             return true;
         }
-
-        TemporarySizeManager tempManager = plugin.getManagerHandler().getTemporarySizeManager();
 
         // IMPORTANT: WorldGuard reports a direct crossing between two adjacent
         // regions (e.g. walking straight from a SIZE-REGION into a DENY-REGION) as
@@ -238,31 +310,17 @@ public class DenyRegionHandler extends Handler {
                 if (isDenyRegion || isSizeRegion) {
                     overriddenPlayers.remove(playerUUID);
 
-                    boolean temporalStillActive = tempManager.hasTemporarySize(playerUUID);
-
-                    if (temporalStillActive) {
-                        TemporarySizeData tempData = tempManager.getTemporarySize(playerUUID);
-                        long remainingTime = tempData.getRemainingTime();
-
-                        if (remainingTime > 0) {
-                            double activeTempSize = tempData.getTemporarySize();
-                            double trueOriginalSize = tempData.getOriginalSize();
-
-                            sizeManager.setSize(cachedPlayer, activeTempSize);
-
-                            tempManager.cancelTemporarySize(playerUUID);
-                            tempManager.setTemporarySize(
-                                    cachedPlayer,
-                                    activeTempSize,
-                                    trueOriginalSize,
-                                    remainingTime,
-                                    false
-                            );
-                        } else {
-                            restorePermanentSizeAsync(playerUUID, cachedPlayer);
-                        }
+                    // IMPORTANT: a DENY/SIZE world for the player's current world
+                    // takes over the moment the region stops applying — same
+                    // region-beats-world precedence used everywhere else. Only
+                    // when no world override applies either do we restore the
+                    // player's real temporary/permanent size.
+                    Double worldSize = worldManager.getOverrideSize(cachedPlayer.getWorld().getName());
+                    if (worldSize != null) {
+                        overriddenPlayers.add(playerUUID);
+                        sizeManager.setSize(cachedPlayer, worldSize);
                     } else {
-                        restorePermanentSizeAsync(playerUUID, cachedPlayer);
+                        restoreNonOverrideSize(cachedPlayer);
                     }
                     break;
                 }

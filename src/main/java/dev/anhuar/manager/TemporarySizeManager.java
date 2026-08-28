@@ -125,6 +125,17 @@ public class TemporarySizeManager {
                     }
                 }
 
+                // IMPORTANT: same reasoning as the region check above, one level
+                // down the precedence chain — if the temp expires while the player
+                // is in a DENY/SIZE world, keep the world's forced size instead of
+                // flickering to the original for a tick.
+                Double worldSize = plugin.getManagerHandler().getWorldManager()
+                        .getOverrideSize(player.getWorld().getName());
+                if (worldSize != null) {
+                    applyRestoredSize(player, worldSize, animate);
+                    return;
+                }
+
                 applyRestoredSize(player, tempData.getOriginalSize(), animate);
 
                 MessageUtil.sendMessage(player, "temp-size-expired",

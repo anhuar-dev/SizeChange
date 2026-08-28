@@ -8,12 +8,15 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static dev.anhuar.menu.MenuItemFactory.buildConfiguredItem;
 
-// Landing page opened by /sizechange config: pick DENY-REGION or SIZE-REGION
-// before RegionConfigMenu opens, scoped to just that one collection.
+// Landing page opened by /sizechange config: pick which override collection to
+// manage (DENY-REGION / SIZE-REGION / DENY-WORLD / SIZE-WORLD) before
+// RegionConfigMenu opens, scoped to just that one collection.
 public class RegionTypeMenu {
 
     private final SizeChange plugin;
@@ -30,18 +33,32 @@ public class RegionTypeMenu {
         }
 
         int rows = Math.max(1, Math.min(6, cfg.getInt("rows", 3)));
-        String title = cfg.getString("title", "Configure Regions");
+        String title = cfg.getString("title", "Configure Overrides");
 
-        ConfigurationSection denySection = cfg.getConfigurationSection("deny-button");
-        ConfigurationSection sizeSection = cfg.getConfigurationSection("size-button");
+        // menu.yml button key -> which collection it opens. LinkedHashMap only for
+        // stable placement order; a missing button section is simply skipped.
+        Map<String, RegionConfigMenu.ConfigType> buttonTypes = new LinkedHashMap<>();
+        buttonTypes.put("deny-button", RegionConfigMenu.ConfigType.DENY_REGION);
+        buttonTypes.put("world-deny-button", RegionConfigMenu.ConfigType.DENY_WORLD);
+        buttonTypes.put("size-button", RegionConfigMenu.ConfigType.SIZE_REGION);
+        buttonTypes.put("world-size-button", RegionConfigMenu.ConfigType.SIZE_WORLD);
+
+        Map<Integer, RegionConfigMenu.ConfigType> slotTypes = new HashMap<>();
+        for (Map.Entry<String, RegionConfigMenu.ConfigType> entry : buttonTypes.entrySet()) {
+            ConfigurationSection section = cfg.getConfigurationSection(entry.getKey());
+            if (section == null) {
+                continue;
+            }
+            int slot = section.getInt("slot", -1);
+            if (slot >= 0) {
+                slotTypes.put(slot, entry.getValue());
+            }
+        }
 
         MenuHolder holder = new MenuHolder((player, slot) -> {
-            if (denySection != null && slot == denySection.getInt("slot", -1)) {
-                new RegionConfigMenu(plugin, RegionConfigMenu.RegionType.DENY).open(player, 0);
-                return;
-            }
-            if (sizeSection != null && slot == sizeSection.getInt("slot", -1)) {
-                new RegionConfigMenu(plugin, RegionConfigMenu.RegionType.SIZE).open(player, 0);
+            RegionConfigMenu.ConfigType picked = slotTypes.get(slot);
+            if (picked != null) {
+                new RegionConfigMenu(plugin, picked).open(player, 0);
             }
         });
 
@@ -53,8 +70,9 @@ public class RegionTypeMenu {
             inventory.setItem(i, fillItem);
         }
 
-        placeButton(inventory, denySection);
-        placeButton(inventory, sizeSection);
+        for (String buttonKey : buttonTypes.keySet()) {
+            placeButton(inventory, cfg.getConfigurationSection(buttonKey));
+        }
 
         viewer.openInventory(inventory);
     }
