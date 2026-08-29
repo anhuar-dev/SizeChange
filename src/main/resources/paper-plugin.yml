@@ -11,6 +11,10 @@ dependencies:
       load: BEFORE
       required: true
       join-classpath: true
+    PlaceholderAPI:
+      load: BEFORE
+      required: false
+      join-classpath: true
 
 libraries:
   - com.google.code.gson:gson:2.10.1
@@ -35,6 +39,9 @@ permissions:
   sizechange.temporary.clear:
     description: Cancel a player's active temporary size
     default: op
+  sizechange.temporary.extend:
+    description: Extend the remaining time of a player's active temporary size
+    default: op
   sizechange.view:
     description: View a player's current size (permanent and temporary)
     default: op
@@ -46,6 +53,12 @@ permissions:
     default: op
   sizechange.config:
     description: Open the GUI to add/remove DENY/SIZE region and world overrides
+    default: op
+  sizechange.combat.check:
+    description: Check whether a player has an active PvP combat tag
+    default: op
+  sizechange.combat.clear:
+    description: Remove a player's active PvP combat tag
     default: op
   sizechange.reload:
     description: Reload the plugin's configuration

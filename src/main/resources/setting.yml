@@ -35,7 +35,38 @@ EFFECTS:
     NAME: "ENTITY_SLIME_SQUISH"
   PARTICLE:
     ENABLED: true
-    NAME: "POOF"
+    # Any org.bukkit.Particle. Bright, single-point ones read best with the drawn
+    # shapes below: FLAME, SOUL_FIRE_FLAME, END_ROD, ELECTRIC_SPARK, GLOW,
+    # HAPPY_VILLAGER, WAX_ON, DUST (glows cyan). POOF/CLOUD look faint.
+    NAME: "FLAME"
+    # Shape the particles are drawn in. Pick it in-game from /sizechange config.
+    #   HELIX - full double spiral spinning around the player (default)
+    #   AURA  - stacked rings rising and pulsing outward, then closing in
+    #   BURST - the old one-shot puff
+    STYLE: "HELIX"
+    # How long HELIX/AURA last, in ticks (20 = 1 second). Ignored by BURST.
+    DURATION: 50
+
+# PvP combat tag. When two players damage each other, BOTH are put "in combat"
+# for DURATION seconds; every new hit refreshes the timer. While tagged, the
+# player's size is forced to SIZE (visual only — the real permanent/temporary
+# size is restored when the tag runs out), and this OUTRANKS region/world size
+# overrides. If either player is inside an EXCLUDED-REGIONS region when the hit
+# lands, neither gets tagged (a tag already running is not cancelled by walking
+# into one). Players with sizechange.bypass are never tagged.
+COMBAT:
+  ENABLED: true
+  DURATION: 15            # seconds
+  SIZE: 1.0               # forced size while in combat (0.0625 - 16.0)
+  EXCLUDED-REGIONS: []    # WorldGuard region ids where PvP does NOT start a tag
+  # Each output is independent — turn any of them off on its own.
+  DISPLAY:
+    ACTIONBAR: true
+    BOSSBAR: true
+    CHAT: true
+  BOSSBAR:
+    COLOR: "RED"          # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+    OVERLAY: "NOTCHED_10" # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
 
 # List of WorldGuard region names. While a player is standing inside any of
 # these, their size is forced to 1.0 (normal), overriding both their

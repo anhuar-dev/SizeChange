@@ -16,14 +16,15 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static dev.anhuar.menu.MenuItemFactory.buildConfiguredItem;
 import static dev.anhuar.menu.MenuItemFactory.buildItem;
 
-// In-game editor for ONE of the four override collections in setting.yml
-// (DENY-REGION / SIZE-REGION / DENY-WORLD / SIZE-WORLD), scoped by `type` for the
-// lifetime of this instance — reached via RegionTypeMenu, which picks the type
-// first. Unlike PlayerListMenu (read-only), this menu writes back to disk:
+// In-game editor for ONE name/size collection in setting.yml
+// (DENY-REGION / SIZE-REGION / DENY-WORLD / SIZE-WORLD / COMBAT.EXCLUDED-REGIONS),
+// scoped by `type` for the lifetime of this instance — reached via RegionTypeMenu
+// or the Combat settings screen. Unlike PlayerListMenu (read-only), it writes to disk:
 // clicking an existing entry asks for confirmation before removing it, the "add"
 // button walks the player through a chat-input flow (region/world name, then size
 // for the SIZE-* collections) via ChatInputManager. Fully driven by menu.yml's
@@ -45,7 +46,10 @@ public class RegionConfigMenu {
         DENY_WORLD("DENY-WORLD", false, true, "config-world-deny",
                 "config-add-prompt-world", "config-add-world-not-found-warning"),
         SIZE_WORLD("SIZE-WORLD", true, true, "config-world-size",
-                "config-add-prompt-world", "config-add-world-not-found-warning");
+                "config-add-prompt-world", "config-add-world-not-found-warning"),
+        // Region-id list at a nested path — the PvP combat tag's exclusions.
+        COMBAT_EXCLUDED("COMBAT.EXCLUDED-REGIONS", false, false, "config-combat-excluded",
+                "config-add-prompt-name", "config-add-region-not-found-warning");
 
         private final String path;
         private final boolean sized;
@@ -81,10 +85,25 @@ public class RegionConfigMenu {
 
     private final SizeChange plugin;
     private final ConfigType type;
+    // Where the "back" button goes. null -> the RegionTypeMenu hub (default).
+    private final Consumer<Player> backTarget;
 
     public RegionConfigMenu(SizeChange plugin, ConfigType type) {
+        this(plugin, type, null);
+    }
+
+    public RegionConfigMenu(SizeChange plugin, ConfigType type, Consumer<Player> backTarget) {
         this.plugin = plugin;
         this.type = type;
+        this.backTarget = backTarget;
+    }
+
+    private void goBack(Player player) {
+        if (backTarget != null) {
+            backTarget.accept(player);
+        } else {
+            new RegionTypeMenu(plugin).open(player);
+        }
     }
 
     public void open(Player viewer, int page) {
@@ -242,7 +261,7 @@ public class RegionConfigMenu {
             return;
         }
         if (back != null && slot == back.getInt("slot", -1)) {
-            new RegionTypeMenu(plugin).open(player);
+            goBack(player);
             return;
         }
 
@@ -403,6 +422,9 @@ public class RegionConfigMenu {
 
     private boolean isDuplicate(String name) {
         var config = plugin.getSetting().getConfig();
+        if (type == ConfigType.COMBAT_EXCLUDED) {
+            return config.getStringList(type.path).contains(name);
+        }
         if (type.world) {
             return config.getStringList("DENY-WORLD").contains(name)
                     || config.contains("SIZE-WORLD." + name);
@@ -423,6 +445,7 @@ public class RegionConfigMenu {
             case DENY_REGION -> plugin.getManagerHandler().getRegionManager().reloadDenyRegions();
             case SIZE_REGION -> DenyRegionHandler.reloadSizeRegions();
             case DENY_WORLD, SIZE_WORLD -> plugin.getManagerHandler().getWorldManager().reload();
+            case COMBAT_EXCLUDED -> plugin.getManagerHandler().getCombatTagManager().reload();
         }
     }
 

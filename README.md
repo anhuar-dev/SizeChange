@@ -18,6 +18,7 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - Change player size from **0.0625x to 16x**, no reconnect required
 - **Permanent** sizes persist across sessions; **temporary** sizes auto-revert when they expire
 - Commanded size changes (`set`/`reset`/`temporary set`/`temporary clear`) **smoothly animate** over ~0.8s with an ease-out curve instead of snapping instantly, with a configurable **sound + particle** on every change — toggle either one off, and pick your own sound/particle, via `ANIMATION`/`EFFECTS` in `setting.yml`; region-driven and automatic changes always stay instant and silent either way, so neither ever adds recurring cost
+- Two drawn **particle animations** — `HELIX` (twin strands spiralling up the player) and `AURA` (rings rising and pulsing outward) — that scale with the player's size and follow them as they move, plus the classic one-shot `BURST`. Pick the style and its length from the config GUI
 - Runs on vanilla `Attribute.SCALE` — nothing to install client-side
 
 ### 🗺️ WorldGuard Region & World Control
@@ -28,6 +29,13 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - Worlds behave exactly like regions: visual-only while inside, never written to the database, restored on leaving. A region the player is standing in always takes precedence over the world
 - A player's active temporary size is preserved across a region/world visit and resumes with the correct time remaining when they leave
 - `sizechange.bypass` lets staff ignore region/world enforcement entirely
+
+### ⚔️ PvP Combat Tag
+- Two players damage each other → **both** are "in combat" for a configurable time (default 15s); every fresh hit refreshes it
+- While tagged, size is forced to a configurable value (default 1.0x) — visual-only, restored when the tag ends, and it **outranks region/world overrides**
+- Per-region exclusions: if either player is inside an excluded region on the hit, nobody is tagged
+- Independent **action bar**, **boss bar** (configurable colour/overlay) and **chat** feedback — toggle each on its own
+- `sizechange.bypass` players are never tagged; `/sizechange combat check|clear <player>` for staff
 
 ### 💾 Flexible Database
 - **SQLite** by default — zero setup, ideal for most servers
@@ -43,10 +51,11 @@ Change any player's size on the fly — permanently or for a set duration — wi
 ### 🛠️ Admin Experience
 - Brigadier-powered command with tab completion for player names and durations
 - `/sizechange list` opens a **paginated GUI** with player heads (real skins) instead of a wall of text — hover a head to see that player's permanent/temporary size and time remaining
-- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region/world name (and size, for the SIZE ones) straight into chat — no more hand-editing YAML and `/sizechange reload`
+- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD` (add/remove entries by chat, with a delete confirmation) **and** for the **Combat** and **Effects** settings — toggle booleans, cycle the boss-bar colour/overlay, edit numbers and sound/particle names in place, no YAML editing or `/sizechange reload`
 - Both GUIs are **100% configurable** via `menu.yml` — title, size, fill item, navigation slots/materials, and every item's name/lore template, all editable, no code required
 - Fully customizable messages — MiniMessage tags, hex colors (`&#RRGGBB`), and legacy `&`/`§` codes all supported
 - A ready-to-copy **DeluxeMenus template** (`deluxemenu_template.yml`, generated on first run) — a self-service size picker players can open themselves, no permissions needed (requires the separate, optional DeluxeMenus plugin)
+- **PlaceholderAPI** support (optional) — `%sizechange_size%`, `%sizechange_temporary_remaining%`, … for scoreboards, tab, holograms, etc.
 
 ## 📋 Commands
 
@@ -59,12 +68,15 @@ Root command: **`/sizechange`** (no aliases).
 | `/sizechange permanent reset <player>` | Reset the permanent size back to normal (`1.0`) | `sizechange.permanent.reset` |
 | `/sizechange temporary set <player> <size> <duration>` | Apply a temporary size | `sizechange.temporary.set` |
 | `/sizechange temporary clear <player>` | Cancel an active temporary size | `sizechange.temporary.clear` |
+| `/sizechange temporary extend <player> <duration>` | Add time to an active temporary size | `sizechange.temporary.extend` |
 | `/sizechange view <player>` | View current permanent + temporary size in one reply | `sizechange.view` |
 | `/sizechange list` | Open the paginated GUI of online players | `sizechange.list` |
 | `/sizechange info` | Plugin diagnostics (version, database, active temporaries) | `sizechange.info` |
 | `/sizechange config` | Open the GUI to add/remove region and world overrides (DENY/SIZE) | `sizechange.config` |
-| `/sizechange reload` | Reload config, messages, menu, regions and worlds | `sizechange.reload` |
-| — | Ignore DENY / SIZE region and world enforcement | `sizechange.bypass` |
+| `/sizechange combat check <player>` | Show whether a player is combat-tagged and for how long | `sizechange.combat.check` |
+| `/sizechange combat clear <player>` | Remove a player's combat tag now | `sizechange.combat.clear` |
+| `/sizechange reload` | Reload config, messages, menu, regions, worlds and combat | `sizechange.reload` |
+| — | Ignore DENY/SIZE region & world enforcement, and PvP combat tags | `sizechange.bypass` |
 
 Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g. `30s`, `5m`, `2h`, `1d`.
 
@@ -77,6 +89,7 @@ Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g.
 - **Java:** 21+
 - **WorldGuard:** 7.0.7+ and WorldEdit 7.3+ (required, must load before this plugin)
 - **Database:** none required by default (SQLite); MongoDB 4.0+ only if you opt into it
+- **PlaceholderAPI:** optional — the expansion registers itself automatically when it's installed
 
 ## 📦 Installation
 
@@ -135,7 +148,26 @@ EFFECTS:
     NAME: "ENTITY_SLIME_SQUISH"
   PARTICLE:
     ENABLED: true
-    NAME: "POOF"
+    NAME: "FLAME"     # bright single-point particles read best; POOF looks faint
+    STYLE: "HELIX"    # HELIX, AURA or BURST
+    DURATION: 50      # ticks; HELIX/AURA only
+
+# PvP combat tag. Both players are tagged for DURATION seconds on a mutual hit
+# (each hit refreshes it); size is forced to SIZE while tagged, outranking any
+# region/world override, and restored when it ends. No tag if either player is
+# in an EXCLUDED-REGIONS region on the hit. sizechange.bypass players are exempt.
+COMBAT:
+  ENABLED: true
+  DURATION: 15
+  SIZE: 1.0
+  EXCLUDED-REGIONS: []
+  DISPLAY:               # each independent
+    ACTIONBAR: true
+    BOSSBAR: true
+    CHAT: true
+  BOSSBAR:
+    COLOR: "RED"         # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+    OVERLAY: "NOTCHED_10" # PROGRESS, NOTCHED_6/10/12/20
 
 # WorldGuard region names. Size is forced to 1.0 (normal) while a player is
 # standing inside any of these — their permanent/temporary size isn't lost,
@@ -165,7 +197,7 @@ SIZE-WORLD:
 
 ### `message.yml` - Customizable Messages
 
-Available placeholders (vary by key): `{player}`, `{size}`, `{temp_size}`, `{duration}`, `{remaining}`, `{version}`, `{database}`, `{active_temp}`, `{regions}`, `{worlds}`, `{region}`, `{world}`, `{name}`.
+Available placeholders (vary by key): `{player}`, `{size}`, `{temp_size}`, `{duration}`, `{remaining}`, `{seconds}`, `{version}`, `{database}`, `{active_temp}`, `{regions}`, `{worlds}`, `{combat}`, `{region}`, `{world}`, `{name}`.
 
 ```yaml
 help:
@@ -174,6 +206,8 @@ help:
   - "<yellow>/sizechange permanent reset <player> <gray>- Reset size to normal"
   - "<yellow>/sizechange temporary set <player> <size> <duration> <gray>- Apply a temporary size"
   - "<yellow>/sizechange temporary clear <player> <gray>- Cancel temporary size"
+  - "<yellow>/sizechange temporary extend <player> <duration> <gray>- Add time to a temporary size"
+  - "<yellow>/sizechange combat check|clear <player> <gray>- Inspect or remove a combat tag"
   - "<yellow>/sizechange view <player> <gray>- View current size"
   - "<yellow>/sizechange list <gray>- Open the online players menu"
   - "<yellow>/sizechange info <gray>- View plugin diagnostics"
@@ -256,14 +290,12 @@ only lists online players — no new database queries.
 
 ### `menu.yml` - `/sizechange config` GUI Menu
 
-Unlike the one above, this flow **does write to `setting.yml`**, and has two screens:
+Unlike the one above, this flow **does write to `setting.yml`**, and has these screens:
 
-1. **`region-config-select`** — the selector opened by `/sizechange config`: four buttons, `deny-button`,
-   `size-button`, `world-deny-button` and `world-size-button`. Picking one opens `region-config` already
-   scoped to that collection — the rest of the flow (add, list, remove) already knows whether you're
-   managing `DENY-REGION`, `SIZE-REGION`, `DENY-WORLD` or `SIZE-WORLD`, so it never asks for the type again.
-   (A missing button section is just skipped — on an existing `menu.yml` the two world buttons are added
-   automatically by the config auto-update.)
+1. **`region-config-select`** — the hub opened by `/sizechange config`: `deny-button`, `size-button`,
+   `world-deny-button`, `world-size-button` (each opens `region-config` scoped to that collection),
+   `combat-button` and `effects-button` (each opens a `SettingsMenu`). A missing button section is just
+   skipped — on an existing `menu.yml` the new buttons are added automatically by the config auto-update.
 2. **`region-config`** — the paginated list of that collection (templates `deny-entry`/`size-entry`, shared
    by the region and world collections, with placeholders `{name}`/`{size}` — `{region}`/`{world}` are kept
    as aliases; the title supports `{type}` → the setting.yml key). Clicking an existing entry opens a
@@ -276,11 +308,20 @@ Unlike the one above, this flow **does write to `setting.yml`**, and has two scr
    any step you can type `cancel` to abort.
 
 After saving or removing, the matching cache is reloaded automatically
-(`regionManager.reloadDenyRegions()` / `DenyRegionHandler.reloadSizeRegions()` / `worldManager.reload()`) —
-the change applies live, no need for `/sizechange reload`. If the typed name doesn't match a real WorldGuard
-region (regions) or a loaded world (worlds), it still saves but warns with
-`config-add-region-not-found-warning` / `config-add-world-not-found-warning` (useful for catching typos
-without blocking a legitimate save, e.g. a region in a world that isn't loaded yet).
+(`regionManager.reloadDenyRegions()` / `DenyRegionHandler.reloadSizeRegions()` / `worldManager.reload()` /
+`combatTagManager.reload()`) — the change applies live, no need for `/sizechange reload`. If the typed name
+doesn't match a real WorldGuard region (regions) or a loaded world (worlds), it still saves but warns with
+`config-add-region-not-found-warning` / `config-add-world-not-found-warning`.
+
+3. **`settings-combat` / `settings-effects`** — the Combat and Effects screens (from `combat-button` /
+   `effects-button`). Only `title` / `rows` / `back-slot` / `fill` are read from `menu.yml`; each setting's
+   item is built by the plugin and shows its live value. Clicking one flips a boolean, cycles the boss-bar
+   colour/overlay or the particle animation style, or opens a chat prompt for a number (validated on submit).
+   For the **sound / particle name** it first asks *type it* vs *browse the list* — the latter opens
+   `value-picker`, a paginated menu of every `Sound` / `Particle`, click to select. The Effects screen also
+   carries the particle animation style and its length. The Combat screen's "Excluded regions" slot reuses
+   `region-config` (its `back` returns to the Combat screen). Every write saves `setting.yml` and reloads
+   `CombatTagManager`; the Effects keys are read live by `SizeAnimator`, so they need no reload.
 
 ```yaml
 region-config-select:
@@ -367,6 +408,24 @@ pattern for any preset you want to reserve for a specific rank. Note: DeluxeMenu
 type needs **Vault** installed — without it, this specific button's gate won't work even though the rest of the
 menu will.
 
+### PlaceholderAPI (optional)
+
+If PlaceholderAPI is installed, an expansion registers itself on startup (no `/papi ecloud` download — it ships
+inside the plugin). All placeholders read live in-memory state, so the size ones only resolve for **online**
+players (an offline player gives an empty string; the booleans still answer):
+
+| Placeholder | Value |
+|---|---|
+| `%sizechange_size%` | current visible size, 2 decimals (`%sizechange_size_raw%` for full precision) |
+| `%sizechange_permanent_size%` | the player's real permanent size (ignores an active temp or a region/world override) |
+| `%sizechange_temporary_active%` | `true` / `false` |
+| `%sizechange_temporary_size%` | the temp size, or empty |
+| `%sizechange_temporary_remaining%` | e.g. `4m 12s`, or empty |
+| `%sizechange_temporary_remaining_seconds%` | integer seconds, or `0` |
+| `%sizechange_override_active%` | `true` while a DENY/SIZE region or world is forcing the player's size |
+| `%sizechange_combat_tagged%` | `true` / `false` |
+| `%sizechange_combat_remaining%` | seconds left on the combat tag, or `0` |
+
 ---
 
 ## 🔧 Technical Features
@@ -401,6 +460,31 @@ menu will.
   (`ENABLED` + string `SOUND`/`PARTICLE`) is migrated to the new shape automatically on first load, preserving both
   the on/off state and any custom names.
 
+### Particle Animations
+
+`ParticleAnimator` draws the particle half of an effect. `EFFECTS.PARTICLE.STYLE` picks the shape and
+`EFFECTS.PARTICLE.DURATION` its length in ticks (default 50 = 2.5s):
+
+| Style | Shape |
+|---|---|
+| `HELIX` *(default)* | The full double spiral (2 strands, ~2.5 turns) redrawn every tick — spinning, radius pinched at the feet and head so it reads as a cocoon |
+| `AURA` | Four full rings at staggered heights, each looping feet→head and widest at chest height, the whole set spinning |
+| `BURST` | The original one-shot puff, kept so an existing `setting.yml` keeps behaving the same |
+
+`HELIX`/`AURA` run as a per-player repeating task that **redraws the entire shape every tick** (~68 / ~88
+points) rather than tracing it with a few particles, and a `sin` envelope over the run makes it bloom out of
+the player, hold, then draw back in. It re-reads the player's location each tick so it follows them, and
+scales with the target size (clamped to `0.35`–`4.0`, so a 16x giant doesn't paint a 30-block helix). The
+task self-terminates when the player goes offline; `SizeAnimator.cancel()` deliberately does **not** touch it
+(that method fires mid-`animateTo`, right after the effect starts).
+
+Every point is spawned with `count=1`, zero offset and zero `extra` — Bukkit's usual `count`+offset form
+scatters particles randomly in a box and `extra` launches them, which is what made the old effect spray. With
+count 1 and no speed a particle stays exactly where placed. Particles that need a data object (`DUST`,
+`BLOCK`, `ITEM`, …) get a sensible default so every entry in the picker menu is usable. Bright single-point
+particles (`FLAME`, `END_ROD`, `SOUL_FIRE_FLAME`, `ELECTRIC_SPARK`, coloured `DUST`) read best; `POOF`/`CLOUD`
+look faint.
+
 ### WorldGuard Regions & Worlds
 
 - **Boundary-crossing detection**: region crossings are triggered via a WorldGuard session `Handler`
@@ -408,8 +492,8 @@ menu will.
 - **World changes**: a world change fires no WorldGuard boundary event, so `PlayerListener` handles
   `PlayerChangedWorldEvent` and recomputes the override 2 ticks later (`DenyRegionHandler.recomputeOverride`),
   applying or restoring as needed.
-- **Precedence**: a DENY/SIZE region the player physically stands in always wins over a DENY/SIZE world —
-  the world override only applies when no relevant region does (`DenyRegionHandler.resolveOverrideSize`).
+- **Precedence** (`DenyRegionHandler.resolveOverrideSize`): **combat tag → region → world → temporary → permanent**.
+  Each level only applies when nothing above it does; the visible size is always the topmost active one.
 - **Applied on join**: if the player is already inside a DENY/SIZE region *or* world when they join, it's
   applied 3 seconds after join (`DenyRegionHandler.applyOverrideIfApplicable`).
 - **Caches**: `DENY-REGION` (RegionManager), `SIZE-REGION` (DenyRegionHandler) and `DENY-WORLD`/`SIZE-WORLD`
@@ -420,6 +504,24 @@ menu will.
 - **No persistence**: size changes caused by regions or worlds are never written to the database.
 - **Expiration inside a region/world**: if a temporary size expires while the player is still inside a
   DENY/SIZE region or world, the forced size stays in effect instead of immediately restoring the original.
+
+### PvP Combat Tag
+
+- **Trigger**: `EntityDamageByEntityEvent` at `MONITOR` / `ignoreCancelled` — only a hit that actually landed
+  (not cancelled by a PvP flag or protection plugin) counts. The damager is resolved through a projectile to
+  its player shooter. `CombatListener` → `CombatTagManager.onPvpHit(attacker, victim)`.
+- **Both players** get tagged for `COMBAT.DURATION` seconds; each new hit re-stamps the expiry. `COMBAT.SIZE`
+  is applied through the same `overriddenPlayers` set the regions use (`DenyRegionHandler.addVisualOverride`),
+  at the top of the precedence chain.
+- **Exclusions** are checked only when the hit lands: if either player is in a `COMBAT.EXCLUDED-REGIONS`
+  region, neither is tagged. A tag already running is *not* cancelled by walking into an excluded region.
+- **One 20-tick task** drives the countdown: updates the action bar / boss bar for each tagged player and,
+  when a timer hits zero, calls `DenyRegionHandler.recomputeOverride` to restore the real size (region/world
+  still in effect, active temp with remaining time, or permanent).
+- **Displays** (`COMBAT.DISPLAY.ACTIONBAR` / `BOSSBAR` / `CHAT`) are independent; the boss bar colour/overlay
+  come from `COMBAT.BOSSBAR`. All text is `message.yml` (`combat-*` keys, `{seconds}` placeholder).
+- `sizechange.bypass` players are never tagged. On quit the tag is dropped and the real permanent size is
+  saved (not the combat one); tags do not survive a relog.
 
 ---
 
@@ -566,17 +668,22 @@ src/main/java/dev/anhuar/
 │   └── MongoDB.java             # MongoDB implementation
 ├── handler/
 │   ├── CommandHandler.java
-│   ├── DenyRegionHandler.java   # DENY/SIZE region + world enforcement, precedence, restore
+│   ├── DenyRegionHandler.java   # override precedence (combat/region/world), enforcement, restore
 │   ├── ListenerHandler.java
 │   └── ManagerHandler.java
 ├── listener/
-│   └── PlayerListener.java      # Join/Quit/ChangedWorld
+│   ├── PlayerListener.java      # Join/Quit/ChangedWorld
+│   └── CombatListener.java      # EntityDamageByEntity -> combat tag
+├── hook/
+│   └── PlaceholderHook.java     # PlaceholderAPI expansion (%sizechange_...%)
 ├── manager/
 │   ├── PlayerDataManager.java   # DB management, dirty tracking and auto-save
 │   ├── SizeManager.java         # Reads/writes Attribute.SCALE (instant)
-│   ├── SizeAnimator.java        # Smooth ~0.5s interpolation, command-triggered changes only
+│   ├── SizeAnimator.java        # Smooth ~0.8s interpolation, command-triggered changes only
+│   ├── ParticleAnimator.java    # Drawn particle shapes (HELIX / AURA / BURST)
 │   ├── RegionManager.java       # DENY-REGION cache
 │   ├── WorldManager.java        # DENY-WORLD / SIZE-WORLD cache
+│   ├── CombatTagManager.java    # PvP combat tags, countdown task, bossbar/actionbar
 │   └── TemporarySizeManager.java # Temporary sizes and their expiration
 ├── menu/
 │   ├── MenuHolder.java          # InventoryHolder + functional click handler; includes
@@ -584,11 +691,15 @@ src/main/java/dev/anhuar/
 │   ├── MenuItemFactory.java     # Shared helpers: builds ItemStacks from menu.yml
 │   ├── ChatInputManager.java    # Captures a player's next chat message (with "cancel")
 │   ├── PlayerListMenu.java      # Paginated GUI for /sizechange list (read-only)
-│   ├── RegionTypeMenu.java      # DENY/SIZE region+world selector opened by /sizechange config
-│   └── RegionConfigMenu.java    # Lists+adds+removes (with confirmation) one region/world collection
+│   ├── RegionTypeMenu.java      # /sizechange config hub (region/world/combat/effects)
+│   ├── RegionConfigMenu.java    # Lists+adds+removes (with confirmation) one name/size collection
+│   ├── SettingsMenu.java        # Generic setting.yml editor GUI (Combat / Effects screens)
+│   └── ValuePickerMenu.java     # Paginated string picker (browse every Sound / Particle)
 ├── model/
 │   ├── PlayerData.java
 │   └── TemporarySizeData.java
+├── hook/
+│   └── PlaceholderHook.java     # PlaceholderAPI expansion (registered only if PAPI is present)
 └── util/
     ├── ColorUtil.java
     ├── ConfigUtil.java
@@ -613,9 +724,9 @@ parsing and formatting (`DurationUtil`) and temporary size state (`PlayerData`,
 `TemporarySizeData`). Logic that touches the Bukkit or WorldGuard API isn't covered
 and requires testing on a real server.
 
-Stack: Paper Dev Bundle `1.21.4-R0.1-SNAPSHOT`, Java 21 (toolchain), WorldGuard/WorldEdit `compileOnly`, Lombok. Runtime
-dependencies (Gson, MongoDB driver, SQLite JDBC) are declared as `libraries` in `paper-plugin.yml` and downloaded by
-Paper on startup.
+Stack: Paper Dev Bundle `1.21.4-R0.1-SNAPSHOT`, Java 21 (toolchain), WorldGuard/WorldEdit and PlaceholderAPI
+`compileOnly`, Lombok. Runtime dependencies (Gson, MongoDB driver, SQLite JDBC) are declared as `libraries` in
+`paper-plugin.yml` and downloaded by Paper on startup.
 
 ---
 

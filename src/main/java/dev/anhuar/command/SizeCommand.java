@@ -102,6 +102,26 @@ public class SizeCommand {
                                                                             .executes(this::executeTemporaryClear)
                                                             )
                                             )
+                                            .then(
+                                                    literal("extend")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.temporary.extend"))
+                                                            .then(
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .then(
+                                                                                    argument("duration", StringArgumentType.word())
+                                                                                            .suggests((context, builder) -> {
+                                                                                                builder.suggest("30s");
+                                                                                                builder.suggest("1m");
+                                                                                                builder.suggest("5m");
+                                                                                                builder.suggest("10m");
+                                                                                                builder.suggest("1h");
+                                                                                                return builder.buildFuture();
+                                                                                            })
+                                                                                            .executes(this::executeTemporaryExtend)
+                                                                            )
+                                                            )
+                                            )
                             )
                             .then(
                                     literal("view")
@@ -126,6 +146,27 @@ public class SizeCommand {
                                     literal("config")
                                             .requires(source -> source.getSender().hasPermission("sizechange.config"))
                                             .executes(this::executeConfig)
+                            )
+                            .then(
+                                    literal("combat")
+                                            .then(
+                                                    literal("check")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.combat.check"))
+                                                            .then(
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .executes(this::executeCombatCheck)
+                                                            )
+                                            )
+                                            .then(
+                                                    literal("clear")
+                                                            .requires(source -> source.getSender().hasPermission("sizechange.combat.clear"))
+                                                            .then(
+                                                                    argument("player", StringArgumentType.word())
+                                                                            .suggests(PLAYER_SUGGESTIONS)
+                                                                            .executes(this::executeCombatClear)
+                                                            )
+                                            )
                             )
                             .then(
                                     literal("reload")
@@ -310,6 +351,48 @@ public class SizeCommand {
         return 1;
     }
 
+    private int executeTemporaryExtend(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+        String duration = context.getArgument("duration", String.class);
+
+        Player target = resolveTarget(context, sender);
+        if (target == null) {
+            return 0;
+        }
+
+        long durationMs = DurationUtil.parse(duration);
+        if (durationMs <= 0) {
+            MessageUtil.sendMessage(sender, "invalid-duration");
+            return 0;
+        }
+
+        var tempManager = plugin.getManagerHandler().getTemporarySizeManager();
+        if (!tempManager.extendTemporarySize(target.getUniqueId(), durationMs)) {
+            MessageUtil.sendMessage(sender, "temp-size-none",
+                    MessageUtil.placeholder("player", target.getName()));
+            return 0;
+        }
+
+        String remaining = DurationUtil.format(tempManager.getTemporarySize(target.getUniqueId()).getRemainingTime());
+
+        MessageUtil.sendMessage(sender, "temp-size-extended",
+                new MessageUtil.PlaceholderBuilder()
+                        .add("player", target.getName())
+                        .add("duration", duration)
+                        .add("remaining", remaining)
+                        .build());
+
+        if (!sender.equals(target)) {
+            MessageUtil.sendMessage(target, "temp-size-extended-target",
+                    new MessageUtil.PlaceholderBuilder()
+                            .add("duration", duration)
+                            .add("remaining", remaining)
+                            .build());
+        }
+
+        return 1;
+    }
+
     private int executeTemporaryClear(CommandContext<CommandSourceStack> context) {
         CommandSender sender = context.getSource().getSender();
 
@@ -321,6 +404,51 @@ public class SizeCommand {
         plugin.getManagerHandler().getTemporarySizeManager().clearTemporarySize(target.getUniqueId());
 
         MessageUtil.sendMessage(sender, "temp-size-cleared", MessageUtil.placeholder("player", target.getName()));
+
+        return 1;
+    }
+
+    private int executeCombatCheck(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+
+        Player target = resolveTarget(context, sender);
+        if (target == null) {
+            return 0;
+        }
+
+        var combatManager = plugin.getManagerHandler().getCombatTagManager();
+        if (combatManager.isTagged(target.getUniqueId())) {
+            MessageUtil.sendMessage(sender, "combat-check-tagged",
+                    new MessageUtil.PlaceholderBuilder()
+                            .add("player", target.getName())
+                            .add("seconds", combatManager.getRemainingSeconds(target.getUniqueId()))
+                            .build());
+        } else {
+            MessageUtil.sendMessage(sender, "combat-check-untagged",
+                    MessageUtil.placeholder("player", target.getName()));
+        }
+
+        return 1;
+    }
+
+    private int executeCombatClear(CommandContext<CommandSourceStack> context) {
+        CommandSender sender = context.getSource().getSender();
+
+        Player target = resolveTarget(context, sender);
+        if (target == null) {
+            return 0;
+        }
+
+        var combatManager = plugin.getManagerHandler().getCombatTagManager();
+        if (!combatManager.isTagged(target.getUniqueId())) {
+            MessageUtil.sendMessage(sender, "combat-not-tagged",
+                    MessageUtil.placeholder("player", target.getName()));
+            return 0;
+        }
+
+        combatManager.clear(target.getUniqueId());
+        MessageUtil.sendMessage(sender, "combat-cleared",
+                MessageUtil.placeholder("player", target.getName()));
 
         return 1;
     }
@@ -366,6 +494,8 @@ public class SizeCommand {
         var worldManager = plugin.getManagerHandler().getWorldManager();
         int worlds = worldManager.getDenyWorlds().size() + worldManager.getSizeWorlds().size();
 
+        int combatTagged = plugin.getManagerHandler().getCombatTagManager().activeCount();
+
         MessageUtil.sendMessage(sender, "info",
                 new MessageUtil.PlaceholderBuilder()
                         .add("version", version)
@@ -373,6 +503,7 @@ public class SizeCommand {
                         .add("active_temp", activeTemp)
                         .add("regions", denyRegions + sizeRegions)
                         .add("worlds", worlds)
+                        .add("combat", combatTagged)
                         .build());
 
         return 1;
@@ -387,6 +518,7 @@ public class SizeCommand {
 
         plugin.getManagerHandler().getRegionManager().reloadDenyRegions();
         plugin.getManagerHandler().getWorldManager().reload();
+        plugin.getManagerHandler().getCombatTagManager().reload();
         DenyRegionHandler.reloadSizeRegions();
 
         MessageUtil.sendMessage(sender, "reload");

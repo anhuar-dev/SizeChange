@@ -11,12 +11,13 @@ import org.bukkit.inventory.ItemStack;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static dev.anhuar.menu.MenuItemFactory.buildConfiguredItem;
 
-// Landing page opened by /sizechange config: pick which override collection to
-// manage (DENY-REGION / SIZE-REGION / DENY-WORLD / SIZE-WORLD) before
-// RegionConfigMenu opens, scoped to just that one collection.
+// Landing page opened by /sizechange config: pick what to manage — one of the
+// four region/world size collections, the PvP combat settings, or the size-change
+// effects settings — then the matching editor opens.
 public class RegionTypeMenu {
 
     private final SizeChange plugin;
@@ -35,30 +36,32 @@ public class RegionTypeMenu {
         int rows = Math.max(1, Math.min(6, cfg.getInt("rows", 3)));
         String title = cfg.getString("title", "Configure Overrides");
 
-        // menu.yml button key -> which collection it opens. LinkedHashMap only for
+        // menu.yml button key -> what clicking it opens. LinkedHashMap only for a
         // stable placement order; a missing button section is simply skipped.
-        Map<String, RegionConfigMenu.ConfigType> buttonTypes = new LinkedHashMap<>();
-        buttonTypes.put("deny-button", RegionConfigMenu.ConfigType.DENY_REGION);
-        buttonTypes.put("world-deny-button", RegionConfigMenu.ConfigType.DENY_WORLD);
-        buttonTypes.put("size-button", RegionConfigMenu.ConfigType.SIZE_REGION);
-        buttonTypes.put("world-size-button", RegionConfigMenu.ConfigType.SIZE_WORLD);
+        Map<String, Consumer<Player>> buttons = new LinkedHashMap<>();
+        buttons.put("deny-button", p -> new RegionConfigMenu(plugin, RegionConfigMenu.ConfigType.DENY_REGION).open(p, 0));
+        buttons.put("world-deny-button", p -> new RegionConfigMenu(plugin, RegionConfigMenu.ConfigType.DENY_WORLD).open(p, 0));
+        buttons.put("size-button", p -> new RegionConfigMenu(plugin, RegionConfigMenu.ConfigType.SIZE_REGION).open(p, 0));
+        buttons.put("world-size-button", p -> new RegionConfigMenu(plugin, RegionConfigMenu.ConfigType.SIZE_WORLD).open(p, 0));
+        buttons.put("combat-button", p -> SettingsMenu.combat(plugin).open(p));
+        buttons.put("effects-button", p -> SettingsMenu.effects(plugin).open(p));
 
-        Map<Integer, RegionConfigMenu.ConfigType> slotTypes = new HashMap<>();
-        for (Map.Entry<String, RegionConfigMenu.ConfigType> entry : buttonTypes.entrySet()) {
+        Map<Integer, Consumer<Player>> slotActions = new HashMap<>();
+        for (Map.Entry<String, Consumer<Player>> entry : buttons.entrySet()) {
             ConfigurationSection section = cfg.getConfigurationSection(entry.getKey());
             if (section == null) {
                 continue;
             }
             int slot = section.getInt("slot", -1);
             if (slot >= 0) {
-                slotTypes.put(slot, entry.getValue());
+                slotActions.put(slot, entry.getValue());
             }
         }
 
         MenuHolder holder = new MenuHolder((player, slot) -> {
-            RegionConfigMenu.ConfigType picked = slotTypes.get(slot);
-            if (picked != null) {
-                new RegionConfigMenu(plugin, picked).open(player, 0);
+            Consumer<Player> action = slotActions.get(slot);
+            if (action != null) {
+                action.accept(player);
             }
         });
 
@@ -70,7 +73,7 @@ public class RegionTypeMenu {
             inventory.setItem(i, fillItem);
         }
 
-        for (String buttonKey : buttonTypes.keySet()) {
+        for (String buttonKey : buttons.keySet()) {
             placeButton(inventory, cfg.getConfigurationSection(buttonKey));
         }
 

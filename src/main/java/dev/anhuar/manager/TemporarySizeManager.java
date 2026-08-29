@@ -77,6 +77,34 @@ public class TemporarySizeManager {
         activeTasks.put(uuid, task);
     }
 
+    // Adds `extraMillis` to an already-running temporary size and reschedules its
+    // restore task for the new remaining time. Returns false (and does nothing) if
+    // the player has no active temporary size. The visual size is untouched — only
+    // the countdown changes. The new expiration is picked up by the quit save and
+    // the periodic dirty-save the same way the initial one is.
+    public boolean extendTemporarySize(UUID uuid, long extraMillis) {
+        TemporarySizeData data = temporarySizes.get(uuid);
+        if (data == null) {
+            return false;
+        }
+
+        // max(current expiration, now) so extending a temp whose restore task is
+        // merely late (entry still present) grants the full extra time from now,
+        // rather than measuring from an expiration already in the past.
+        long base = Math.max(data.getExpirationTime(), System.currentTimeMillis());
+        data.setExpirationTime(base + extraMillis);
+
+        BukkitTask previous = activeTasks.remove(uuid);
+        if (previous != null) {
+            previous.cancel();
+        }
+
+        long remainingTicks = Math.max(1L, data.getRemainingTime() / 50);
+        BukkitTask task = Bukkit.getScheduler().runTaskLater(plugin, () -> restoreSize(uuid, false), remainingTicks);
+        activeTasks.put(uuid, task);
+        return true;
+    }
+
     public void cancelTemporarySize(UUID uuid) {
         BukkitTask task = activeTasks.remove(uuid);
         if (task != null) {
@@ -100,6 +128,15 @@ public class TemporarySizeManager {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 SizeManager sizeManager = plugin.getManagerHandler().getSizeManager();
+
+                // IMPORTANT: combat tag is the top of the precedence chain — if the
+                // temp expires mid-fight, hold the combat size; CombatTagManager
+                // restores the real size when the tag itself runs out.
+                CombatTagManager combatManager = plugin.getManagerHandler().getCombatTagManager();
+                if (combatManager.isTagged(uuid)) {
+                    applyRestoredSize(player, combatManager.getCombatSize(), animate);
+                    return;
+                }
 
                 // IMPORTANT: check the player's current region BEFORE restoring
                 // tempData.getOriginalSize(). If they're standing in a deny/size

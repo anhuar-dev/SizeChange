@@ -20,6 +20,7 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - Change player size from **0.0625x to 16x**, no reconnect required
 - **Permanent** sizes persist across sessions; **temporary** sizes auto-revert when they expire
 - Commanded size changes (`set`/`reset`/`temporary set`/`temporary clear`) **smoothly animate** over ~0.8s with an ease-out curve instead of snapping instantly, with a configurable **sound + particle** on every change — toggle either one off, and pick your own sound/particle, via `ANIMATION`/`EFFECTS` in `setting.yml`; region-driven and automatic changes always stay instant and silent either way, so neither ever adds recurring cost
+- Two drawn **particle animations** — `HELIX` (twin strands spiralling up the player) and `AURA` (rings rising and pulsing outward) — that scale with the player's size and follow them as they move, plus the classic one-shot `BURST`. Style and length are picked from the config GUI
 - Runs on vanilla `Attribute.SCALE` — nothing to install client-side
 
 ### 🗺️ WorldGuard Region & World Control
@@ -28,6 +29,11 @@ Change any player's size on the fly — permanently or for a set duration — wi
 - **DENY-WORLD** / **SIZE-WORLD** — same, but for a whole world; a region the player stands in takes precedence
 - A player's active temporary size is preserved across a region/world visit and resumes with the correct time remaining when they leave
 - `sizechange.bypass` lets staff ignore region/world enforcement entirely
+
+### ⚔️ PvP Combat Tag
+- Mutual PvP damage tags **both** players for a configurable time (default 15s), refreshed on every hit
+- Size forced to a configurable value while tagged (default 1.0x), restored when it ends — **outranks region/world overrides**
+- Per-region exclusions, plus independent **action bar / boss bar / chat** feedback (boss bar colour + overlay configurable)
 
 ### 💾 Flexible Database
 - **SQLite** by default — zero setup, ideal for most servers
@@ -43,10 +49,11 @@ Change any player's size on the fly — permanently or for a set duration — wi
 ### 🛠️ Admin Experience
 - Brigadier-powered command with tab completion for player names and durations
 - `/sizechange list` opens a **paginated GUI** with player heads (real skins) instead of a wall of text — hover a head to see that player's permanent/temporary size and time remaining
-- `/sizechange config` opens an **in-game editor** for `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD` — pick which one to manage, click an entry to remove it (with a confirmation step), click "add" and type the region/world name (and size, for the SIZE ones) straight into chat — no more hand-editing YAML and `/sizechange reload`
+- `/sizechange config` opens an **in-game editor**: add/remove `DENY-REGION`/`SIZE-REGION`/`DENY-WORLD`/`SIZE-WORLD` entries by chat, and tweak the **Combat** and **Effects** settings (toggles, boss-bar colour/overlay, durations, sound/particle names) right in the GUI — no YAML editing or `/sizechange reload`
 - Both GUIs are **100% configurable** via `menu.yml` — title, size, fill item, navigation slots/materials, and every item's name/lore template, all editable, no code required
 - Fully customizable messages — MiniMessage tags, hex colors (`&#RRGGBB`), and legacy `&`/`§` codes all supported
 - A ready-to-copy **DeluxeMenus template** (`deluxemenu_template.yml`, generated on first run) — a self-service size picker players can open themselves, no permissions needed (requires the separate, optional DeluxeMenus plugin)
+- **PlaceholderAPI** support (optional, auto-registers) — `%sizechange_size%`, `%sizechange_temporary_remaining%`, `%sizechange_override_active%`, … for scoreboards, tab and holograms
 
 ---
 
@@ -61,6 +68,8 @@ Root command: **`/sizechange`** (no aliases).
 | `/sizechange permanent reset <player>` | Reset the permanent size back to normal (`1.0`) | `sizechange.permanent.reset` |
 | `/sizechange temporary set <player> <size> <duration>` | Apply a temporary size | `sizechange.temporary.set` |
 | `/sizechange temporary clear <player>` | Cancel an active temporary size | `sizechange.temporary.clear` |
+| `/sizechange temporary extend <player> <duration>` | Add time to an active temporary size | `sizechange.temporary.extend` |
+| `/sizechange combat check\|clear <player>` | Inspect or remove a PvP combat tag | `sizechange.combat.check` / `.clear` |
 | `/sizechange view <player>` | View current permanent + temporary size in one reply | `sizechange.view` |
 | `/sizechange list` | Open the paginated GUI of online players | `sizechange.list` |
 | `/sizechange info` | Plugin diagnostics (version, database, active temporaries) | `sizechange.info` |
@@ -79,6 +88,7 @@ Duration formats: `s` (seconds), `m` (minutes), `h` (hours), `d` (days) — e.g.
 - **Java:** 21+
 - **WorldGuard:** 7.0.7+ and WorldEdit 7.3+ (required, must load before this plugin)
 - **Database:** none required by default (SQLite); MongoDB 4.0+ only if you opt into it
+- **PlaceholderAPI:** optional — the expansion registers itself when it's installed
 
 ---
 

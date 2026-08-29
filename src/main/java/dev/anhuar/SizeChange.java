@@ -6,8 +6,12 @@ import dev.anhuar.handler.CommandHandler;
 import dev.anhuar.handler.DenyRegionHandler;
 import dev.anhuar.handler.ListenerHandler;
 import dev.anhuar.handler.ManagerHandler;
+import dev.anhuar.hook.PlaceholderHook;
 import dev.anhuar.util.ConfigUtil;
 import lombok.Getter;
+import org.bstats.bukkit.Metrics;
+import org.bstats.charts.SimplePie;
+import org.bstats.charts.SingleLineChart;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @Getter
@@ -24,6 +28,13 @@ public class SizeChange extends JavaPlugin {
     private CommandHandler commandHandler;
     private ListenerHandler listenerHandler;
     private ManagerHandler managerHandler;
+
+    private PlaceholderHook placeholderHook;
+
+    // bStats plugin id. Developer-only: register the plugin once at
+    // https://bstats.org and paste the id here. 0 keeps metrics off entirely.
+    // Server owners opt out through the global plugins/bStats/config.yml.
+    private static final int BSTATS_PLUGIN_ID = 0;
 
     @Override
     public void onEnable() {
@@ -64,7 +75,36 @@ public class SizeChange extends JavaPlugin {
         SessionManager sessionManager = WorldGuard.getInstance().getPlatform().getSessionManager();
         sessionManager.registerHandler(DenyRegionHandler.FACTORY, null);
 
+        setupMetrics();
+        setupPlaceholders();
+
         getLogger().info("Size plugin enabled successfully");
+    }
+
+    // bStats is shaded + relocated (see build.gradle.kts). Fully off unless a
+    // real id is compiled into BSTATS_PLUGIN_ID; see BSTATS.md.
+    private void setupMetrics() {
+        if (BSTATS_PLUGIN_ID <= 0) {
+            return;
+        }
+
+        Metrics metrics = new Metrics(this, BSTATS_PLUGIN_ID);
+        metrics.addCustomChart(new SimplePie("database_type",
+                () -> setting.getString("DATABASE.TYPE")));
+        metrics.addCustomChart(new SimplePie("animation_enabled",
+                () -> String.valueOf(setting.getConfig().getBoolean("ANIMATION.ENABLED", true))));
+        metrics.addCustomChart(new SingleLineChart("active_temporary_sizes",
+                () -> managerHandler.getTemporarySizeManager().activeCount()));
+    }
+
+    private void setupPlaceholders() {
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") == null) {
+            return;
+        }
+        placeholderHook = new PlaceholderHook(this);
+        if (placeholderHook.register()) {
+            getLogger().info("Registered the PlaceholderAPI expansion (%sizechange_...%)");
+        }
     }
 
     private boolean checkWorldGuard() {
@@ -104,9 +144,16 @@ public class SizeChange extends JavaPlugin {
             if (managerHandler.getTemporarySizeManager() != null) {
                 managerHandler.getTemporarySizeManager().shutdown();
             }
+            if (managerHandler.getCombatTagManager() != null) {
+                managerHandler.getCombatTagManager().shutdown();
+            }
             if (managerHandler.getSizeAnimator() != null) {
                 managerHandler.getSizeAnimator().shutdown();
             }
+        }
+
+        if (placeholderHook != null) {
+            placeholderHook.unregister();
         }
 
         DenyRegionHandler.clearAllCache();

@@ -12,6 +12,7 @@ import com.sk89q.worldguard.session.MoveType;
 import com.sk89q.worldguard.session.Session;
 import com.sk89q.worldguard.session.handler.Handler;
 import dev.anhuar.SizeChange;
+import dev.anhuar.manager.CombatTagManager;
 import dev.anhuar.manager.PlayerDataManager;
 import dev.anhuar.manager.RegionManager;
 import dev.anhuar.manager.SizeManager;
@@ -45,6 +46,7 @@ public class DenyRegionHandler extends Handler {
     private static SizeChange plugin;
     private static RegionManager regionManager;
     private static WorldManager worldManager;
+    private static CombatTagManager combatTagManager;
     private static SizeManager sizeManager;
     private static PlayerDataManager dataManager;
 
@@ -75,6 +77,7 @@ public class DenyRegionHandler extends Handler {
         plugin = pluginInstance;
         regionManager = plugin.getManagerHandler().getRegionManager();
         worldManager = plugin.getManagerHandler().getWorldManager();
+        combatTagManager = plugin.getManagerHandler().getCombatTagManager();
         sizeManager = plugin.getManagerHandler().getSizeManager();
         dataManager = plugin.getManagerHandler().getPlayerDataManager();
         reloadSizeRegions();
@@ -97,6 +100,14 @@ public class DenyRegionHandler extends Handler {
 
     public static void cleanupPlayerCache(UUID uuid) {
         overriddenPlayers.remove(uuid);
+    }
+
+    // IMPORTANT: lets another system (currently CombatTagManager) put a player
+    // under the shared visual override without owning a copy of the set. The
+    // owner is responsible for calling recomputeOverride() once its condition
+    // ends so the real size is restored.
+    public static void addVisualOverride(UUID uuid) {
+        overriddenPlayers.add(uuid);
     }
 
     public static void clearAllCache() {
@@ -152,6 +163,12 @@ public class DenyRegionHandler extends Handler {
     // container (not the player's WG session), so this is safe to call the
     // moment a player joins or changes world, before the session is rebuilt.
     private static Double resolveOverrideSize(Player player) {
+        // Combat tag is the most specific, shortest-lived override — it wins over
+        // any region or world the player happens to be in.
+        if (combatTagManager != null && combatTagManager.isTagged(player.getUniqueId())) {
+            return combatTagManager.getCombatSize();
+        }
+
         World adaptWorld = BukkitAdapter.adapt(player.getWorld());
         var container = WorldGuard.getInstance().getPlatform().getRegionContainer().get(adaptWorld);
 
@@ -267,6 +284,13 @@ public class DenyRegionHandler extends Handler {
         }
 
         if (cachedPlayer.hasPermission(BYPASS_PERMISSION)) {
+            return true;
+        }
+
+        // Combat tag outranks any region — keep the player pinned at the combat
+        // size while it lasts; CombatTagManager restores the real size on expiry.
+        if (combatTagManager != null && combatTagManager.isTagged(playerUUID)) {
+            sizeManager.setSize(cachedPlayer, combatTagManager.getCombatSize());
             return true;
         }
 

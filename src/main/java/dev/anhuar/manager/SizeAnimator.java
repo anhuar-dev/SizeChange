@@ -24,18 +24,21 @@ import java.util.concurrent.ConcurrentHashMap;
 // configurable sound and/or particle on every real change it handles (EFFECTS.*
 // in setting.yml — SOUND and PARTICLE each with their own ENABLED/NAME) — same
 // scope as the animation itself, so region/world crossings and automatic
-// expiration never trigger it either.
+// expiration never trigger it either. The particle side is drawn by
+// ParticleAnimator (EFFECTS.PARTICLE.STYLE picks the shape).
 public class SizeAnimator {
 
     private static final int DURATION_TICKS = 16;
 
     private final SizeChange plugin;
     private final SizeManager sizeManager;
+    private final ParticleAnimator particleAnimator;
     private final Map<UUID, BukkitTask> activeAnimations = new ConcurrentHashMap<>();
 
     public SizeAnimator(SizeChange plugin, SizeManager sizeManager) {
         this.plugin = plugin;
         this.sizeManager = sizeManager;
+        this.particleAnimator = new ParticleAnimator(plugin);
     }
 
     public void animateTo(Player player, double targetSize) {
@@ -47,7 +50,7 @@ public class SizeAnimator {
         boolean noChange = Math.abs(targetSize - start) < 0.0001;
 
         if (!noChange) {
-            playEffects(player);
+            playEffects(player, targetSize);
         }
 
         if (noChange || !plugin.getSetting().getConfig().getBoolean("ANIMATION.ENABLED", true)) {
@@ -94,7 +97,7 @@ public class SizeAnimator {
     // each with its own EFFECTS.<x>.ENABLED toggle. Fires once per real change, at
     // the moment it starts (not once at the start and again at the end — a single
     // cue reads cleaner than an echo 0.8s later).
-    private void playEffects(Player player) {
+    private void playEffects(Player player, double targetSize) {
         if (plugin.getSetting().getConfig().getBoolean("EFFECTS.SOUND.ENABLED", true)) {
             String soundName = plugin.getSetting().getString("EFFECTS.SOUND.NAME");
             if (soundName != null && !soundName.isBlank()) {
@@ -112,7 +115,7 @@ public class SizeAnimator {
             if (particleName != null && !particleName.isBlank()) {
                 try {
                     Particle particle = Particle.valueOf(particleName.trim().toUpperCase());
-                    player.getWorld().spawnParticle(particle, player.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3);
+                    particleAnimator.play(player, particle, targetSize);
                 } catch (IllegalArgumentException e) {
                     plugin.getLogger().warning("Invalid EFFECTS.PARTICLE.NAME in setting.yml: '" + particleName + "'");
                 }
@@ -120,6 +123,12 @@ public class SizeAnimator {
         }
     }
 
+    // IMPORTANT: only cancels the size-interpolation task. The particle animation
+    // is NOT touched here — animateTo() calls this right after starting the
+    // particles (to drop a previous interpolation), so cancelling them here would
+    // kill the effect on the very tick it was created. ParticleAnimator replaces
+    // its own per-player task in play(), and each task self-terminates when the
+    // player goes offline, so there is nothing to clean up on quit.
     public void cancel(UUID uuid) {
         BukkitTask task = activeAnimations.remove(uuid);
         if (task != null) {
@@ -130,5 +139,6 @@ public class SizeAnimator {
     public void shutdown() {
         activeAnimations.values().forEach(BukkitTask::cancel);
         activeAnimations.clear();
+        particleAnimator.shutdown();
     }
 }

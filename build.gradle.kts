@@ -15,6 +15,7 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://maven.enginehub.org/repo/") }
+    maven { url = uri("https://repo.extendedclip.com/releases/") }
 }
 
 dependencies {
@@ -30,6 +31,11 @@ dependencies {
     compileOnly("org.mongodb:mongodb-driver-sync:4.11.1")
     compileOnly("org.xerial:sqlite-jdbc:3.47.1.0")
 
+    compileOnly("me.clip:placeholderapi:2.11.6")
+
+    // Shaded + relocated (bStats requires the relocation, see shadowJar below).
+    implementation("org.bstats:bstats-bukkit:3.1.0")
+
     testImplementation("org.junit.jupiter:junit-jupiter:5.14.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -41,6 +47,7 @@ java {
 tasks {
     shadowJar {
         archiveClassifier.set("")
+        relocate("org.bstats", "dev.anhuar.bstats")
     }
 
     assemble {

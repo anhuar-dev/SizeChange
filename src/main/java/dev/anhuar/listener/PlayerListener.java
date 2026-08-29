@@ -129,6 +129,7 @@ public class PlayerListener implements Listener {
                     .thenRun(() -> dataManager.getDatabase().evictFromCache(uuid));
         }
 
+        plugin.getManagerHandler().getCombatTagManager().handleQuit(uuid);
         DenyRegionHandler.cleanupPlayerCache(uuid);
         dataManager.clearPlayerCache(uuid);
     }

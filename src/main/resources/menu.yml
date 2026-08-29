@@ -92,6 +92,52 @@ region-config-select:
       - ""
       - "<yellow>Click to manage"
 
+  combat-button:
+    slot: 21
+    material: DIAMOND_SWORD
+    name: "<red>Combat Settings"
+    lore:
+      - "<gray>PvP combat tag: duration,"
+      - "<gray>forced size, displays, exclusions"
+      - ""
+      - "<yellow>Click to open"
+
+  effects-button:
+    slot: 23
+    material: NOTE_BLOCK
+    name: "<yellow>Effects Settings"
+    lore:
+      - "<gray>Animation, and the sound /"
+      - "<gray>particle played on a size change"
+      - ""
+      - "<yellow>Click to open"
+
+# Combat + Effects settings screens (opened from region-config-select). Only
+# title / rows / back-slot / fill are read here — each setting's item is built by
+# the plugin and shows its live value.
+settings-combat:
+  title: "<dark_gray>Combat Settings"
+  rows: 5
+  back-slot: 40
+  fill:
+    material: GRAY_STAINED_GLASS_PANE
+    name: "<reset>"
+
+settings-effects:
+  title: "<dark_gray>Effects Settings"
+  rows: 4
+  back-slot: 31
+  fill:
+    material: GRAY_STAINED_GLASS_PANE
+    name: "<reset>"
+
+# Paginated "pick a sound / particle" list (opened from the Effects screen via
+# "Browse the list"). Only the bottom-row fill is themable here.
+value-picker:
+  fill:
+    material: GRAY_STAINED_GLASS_PANE
+    name: "<reset>"
+
 region-config:
   title: "<dark_gray>{type} <gray>({page}/{total_pages})"
   rows: 6
