@@ -16,6 +16,8 @@ DATABASE:
     URI: "mongodb://localhost:27017"
     DATABASE: "size_plugin"
     COLLECTION: "players"
+    # Separate collection for the optional ATTRIBUTES feature below.
+    ATTRIBUTES-COLLECTION: "player_attributes"
 
 # Smooth size transition for /sizechange permanent set/reset and temporary
 # set/clear (~0.8s, ease-out). Set to false for an instant change instead.
@@ -67,6 +69,45 @@ COMBAT:
   BOSSBAR:
     COLOR: "RED"          # PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
     OVERLAY: "NOTCHED_10" # PROGRESS, NOTCHED_6, NOTCHED_10, NOTCHED_12, NOTCHED_20
+
+# Optional, fully independent feature — nothing to do with the size system above.
+# Apply extra Minecraft attribute modifiers (movement speed, attack damage, max
+# health, knockback resistance, ...) to a player, either permanently (persisted,
+# re-applied on join) or for a limited time (auto-removed on expiry) — the same
+# permanent/temporary split the size system uses. Manage it in-game with
+# /sizechange attribute ... (permanent set|clear, temporary set|clear|extend,
+# clearall, view). Turn ENABLED off and every subcommand is refused and all
+# modifiers are stripped from online players.
+ATTRIBUTES:
+  ENABLED: true
+
+  # Which attributes staff may modify, by short name (movement_speed) or full key
+  # (minecraft:movement_speed). An EMPTY list means "every supported attribute".
+  # "scale" is ALWAYS blocked here — the size system owns it.
+  # Note: lowering max_health below a player's current health is clamped by
+  # vanilla (they are not killed), and health climbs back when the modifier is
+  # removed.
+  ALLOWED:
+    - "max_health"
+    - "movement_speed"
+    - "attack_damage"
+    - "attack_speed"
+    - "armor"
+    - "armor_toughness"
+    - "knockback_resistance"
+    - "jump_strength"
+    - "safe_fall_distance"
+    - "fall_damage_multiplier"
+    - "block_interaction_range"
+    - "entity_interaction_range"
+    - "block_break_speed"
+    - "step_height"
+    - "luck"
+
+  # Sanity clamp on the amount a single modifier may carry, whichever form it was
+  # entered in (flat "4", percent "20%" -> 0.2, multiplier "1.5x" -> 0.5).
+  MIN-AMOUNT: -1024.0
+  MAX-AMOUNT: 1024.0
 
 # List of WorldGuard region names. While a player is standing inside any of
 # these, their size is forced to 1.0 (normal), overriding both their

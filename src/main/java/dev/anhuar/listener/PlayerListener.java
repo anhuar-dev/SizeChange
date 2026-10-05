@@ -64,6 +64,11 @@ public class PlayerListener implements Listener {
                     sizeManager.setSize(player, playerData.getSize());
                 }
 
+                // Independent optional feature — loads and re-applies the player's
+                // attribute modifiers from the database (does its own async read +
+                // main-thread apply).
+                plugin.getManagerHandler().getAttributeModifierManager().handleJoin(player);
+
                 // IMPORTANT: 60L = 3 seconds. This delay is intentional, not
                 // arbitrary padding — it gives WorldGuard time to finish setting up
                 // the player's region session after join before this queries it.
@@ -130,6 +135,7 @@ public class PlayerListener implements Listener {
         }
 
         plugin.getManagerHandler().getCombatTagManager().handleQuit(uuid);
+        plugin.getManagerHandler().getAttributeModifierManager().handleQuit(uuid);
         DenyRegionHandler.cleanupPlayerCache(uuid);
         dataManager.clearPlayerCache(uuid);
     }

@@ -10,6 +10,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.WriteModel;
+import dev.anhuar.model.AttributeModifierData;
 import dev.anhuar.model.PlayerData;
 import org.bson.Document;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -27,18 +28,24 @@ public class MongoDB implements Database {
     private final String uri;
     private final String databaseName;
     private final String collectionName;
+    private final String attributesCollectionName;
 
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> collection;
+    private MongoCollection<Document> attributesCollection;
     private final Map<UUID, PlayerData> cache;
+    private final Map<UUID, List<AttributeModifierData>> attributeCache;
 
-    public MongoDB(JavaPlugin plugin, String uri, String databaseName, String collectionName) {
+    public MongoDB(JavaPlugin plugin, String uri, String databaseName, String collectionName,
+                   String attributesCollectionName) {
         this.plugin = plugin;
         this.uri = uri;
         this.databaseName = databaseName;
         this.collectionName = collectionName;
+        this.attributesCollectionName = attributesCollectionName;
         this.cache = new ConcurrentHashMap<>();
+        this.attributeCache = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -53,6 +60,7 @@ public class MongoDB implements Database {
                 mongoClient = MongoClients.create(settings);
                 database = mongoClient.getDatabase(databaseName);
                 collection = database.getCollection(collectionName);
+                attributesCollection = database.getCollection(attributesCollectionName);
 
                 database.listCollectionNames().first();
 
@@ -73,6 +81,7 @@ public class MongoDB implements Database {
             plugin.getLogger().info("MongoDB database disconnected");
         }
         cache.clear();
+        attributeCache.clear();
     }
 
     @Override
@@ -181,5 +190,76 @@ public class MongoDB implements Database {
                 plugin.getLogger().severe("Error saving all data to MongoDB: " + e.getMessage());
             }
         });
+    }
+
+    @Override
+    public CompletableFuture<List<AttributeModifierData>> loadAttributes(UUID uuid) {
+        List<AttributeModifierData> cached = attributeCache.get(uuid);
+        if (cached != null) {
+            return CompletableFuture.completedFuture(new ArrayList<>(cached));
+        }
+
+        return CompletableFuture.supplyAsync(() -> {
+            List<AttributeModifierData> result = new ArrayList<>();
+            try {
+                Document doc = attributesCollection.find(Filters.eq("_id", uuid.toString())).first();
+                if (doc != null) {
+                    List<Document> modifiers = doc.getList("modifiers", Document.class);
+                    if (modifiers != null) {
+                        for (Document m : modifiers) {
+                            result.add(new AttributeModifierData(
+                                    m.getString("attribute"),
+                                    m.getDouble("amount"),
+                                    m.getString("operation"),
+                                    m.get("expiration") != null ? m.getLong("expiration") : null
+                            ));
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error loading attributes from MongoDB: " + e.getMessage());
+            }
+            attributeCache.put(uuid, new ArrayList<>(result));
+            return result;
+        });
+    }
+
+    @Override
+    public CompletableFuture<Void> saveAttributes(UUID uuid, String name, List<AttributeModifierData> modifiers) {
+        List<AttributeModifierData> snapshot = new ArrayList<>(modifiers);
+        attributeCache.put(uuid, new ArrayList<>(snapshot));
+
+        return CompletableFuture.runAsync(() -> {
+            try {
+                List<Document> serialised = new ArrayList<>();
+                for (AttributeModifierData m : snapshot) {
+                    Document d = new Document("attribute", m.getAttribute())
+                            .append("amount", m.getAmount())
+                            .append("operation", m.getOperation());
+                    if (m.getExpiration() != null) {
+                        d.append("expiration", m.getExpiration());
+                    }
+                    serialised.add(d);
+                }
+
+                Document doc = new Document("_id", uuid.toString())
+                        .append("name", name)
+                        .append("modifiers", serialised)
+                        .append("lastUpdate", System.currentTimeMillis());
+
+                attributesCollection.replaceOne(
+                        Filters.eq("_id", uuid.toString()),
+                        doc,
+                        new ReplaceOptions().upsert(true)
+                );
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error saving attributes to MongoDB: " + e.getMessage());
+            }
+        });
+    }
+
+    @Override
+    public void evictAttributesFromCache(UUID uuid) {
+        attributeCache.remove(uuid);
     }
 }

@@ -1,10 +1,16 @@
 package dev.anhuar.db;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import dev.anhuar.model.AttributeModifierData;
 import dev.anhuar.model.PlayerData;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -14,10 +20,15 @@ import java.util.concurrent.Executors;
 
 public class SQLiteDB implements Database {
 
+    private static final Gson GSON = new Gson();
+    private static final Type MODIFIER_LIST_TYPE = new TypeToken<List<AttributeModifierData>>() {
+    }.getType();
+
     private final JavaPlugin plugin;
     private final File dbFile;
     private Connection connection;
     private final Map<UUID, PlayerData> cache;
+    private final Map<UUID, List<AttributeModifierData>> attributeCache;
 
     // IMPORTANT: single-threaded on purpose. A single JDBC Connection is not
     // thread-safe, and every DB call in this class runs on this executor. Do not
@@ -33,6 +44,7 @@ public class SQLiteDB implements Database {
         this.plugin = plugin;
         this.dbFile = new File(plugin.getDataFolder(), fileName);
         this.cache = new ConcurrentHashMap<>();
+        this.attributeCache = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -83,6 +95,18 @@ public class SQLiteDB implements Database {
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_uuid ON players(uuid)");
 
                     stmt.execute("CREATE INDEX IF NOT EXISTS idx_name ON players(name)");
+
+                    // ATTRIBUTES feature — one row per player, the modifier list
+                    // held as a compact JSON array in `data`. Independent of the
+                    // `players` table above.
+                    stmt.execute("""
+                            CREATE TABLE IF NOT EXISTS player_attributes (
+                                uuid TEXT PRIMARY KEY NOT NULL,
+                                name TEXT NOT NULL,
+                                data TEXT NOT NULL,
+                                lastUpdate INTEGER NOT NULL
+                            )
+                            """);
                 }
 
                 plugin.getLogger().info("SQLite database connected: " + dbFile.getName());
@@ -107,6 +131,7 @@ public class SQLiteDB implements Database {
             plugin.getLogger().warning("Error closing SQLite: " + e.getMessage());
         }
         cache.clear();
+        attributeCache.clear();
     }
 
     @Override
@@ -227,5 +252,63 @@ public class SQLiteDB implements Database {
                 plugin.getLogger().severe("Error saving all data to SQLite: " + e.getMessage());
             }
         }, dbExecutor);
+    }
+
+    @Override
+    public CompletableFuture<List<AttributeModifierData>> loadAttributes(UUID uuid) {
+        List<AttributeModifierData> cached = attributeCache.get(uuid);
+        if (cached != null) {
+            return CompletableFuture.completedFuture(new ArrayList<>(cached));
+        }
+
+        return CompletableFuture.supplyAsync(() -> {
+            String sql = "SELECT data FROM player_attributes WHERE uuid = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, uuid.toString());
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    List<AttributeModifierData> parsed = GSON.fromJson(rs.getString("data"), MODIFIER_LIST_TYPE);
+                    List<AttributeModifierData> result = parsed != null ? parsed : new ArrayList<>();
+                    attributeCache.put(uuid, new ArrayList<>(result));
+                    return result;
+                }
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Error loading attributes from SQLite: " + e.getMessage());
+            }
+            attributeCache.put(uuid, new ArrayList<>());
+            return new ArrayList<>();
+        }, dbExecutor);
+    }
+
+    @Override
+    public CompletableFuture<Void> saveAttributes(UUID uuid, String name, List<AttributeModifierData> modifiers) {
+        List<AttributeModifierData> snapshot = new ArrayList<>(modifiers);
+        attributeCache.put(uuid, new ArrayList<>(snapshot));
+
+        return CompletableFuture.runAsync(() -> {
+            String sql = """
+                    INSERT INTO player_attributes (uuid, name, data, lastUpdate)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(uuid) DO UPDATE SET
+                        name = excluded.name,
+                        data = excluded.data,
+                        lastUpdate = excluded.lastUpdate
+                    """;
+
+            try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+                pstmt.setString(1, uuid.toString());
+                pstmt.setString(2, name);
+                pstmt.setString(3, GSON.toJson(snapshot, MODIFIER_LIST_TYPE));
+                pstmt.setLong(4, System.currentTimeMillis());
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                plugin.getLogger().warning("Error saving attributes to SQLite: " + e.getMessage());
+            }
+        }, dbExecutor);
+    }
+
+    @Override
+    public void evictAttributesFromCache(UUID uuid) {
+        attributeCache.remove(uuid);
     }
 }

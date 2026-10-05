@@ -1,6 +1,7 @@
 package dev.anhuar.handler;
 
 import dev.anhuar.SizeChange;
+import dev.anhuar.manager.AttributeModifierManager;
 import dev.anhuar.manager.CombatTagManager;
 import dev.anhuar.manager.PlayerDataManager;
 import dev.anhuar.manager.RegionManager;
@@ -23,6 +24,7 @@ public class ManagerHandler {
     private PlayerDataManager playerDataManager;
     private TemporarySizeManager temporarySizeManager;
     private CombatTagManager combatTagManager;
+    private AttributeModifierManager attributeModifierManager;
     private ChatInputManager chatInputManager;
 
     public ManagerHandler(SizeChange plugin) {
@@ -38,6 +40,7 @@ public class ManagerHandler {
         this.playerDataManager = new PlayerDataManager(plugin);
         this.temporarySizeManager = new TemporarySizeManager(plugin);
         this.combatTagManager = new CombatTagManager(plugin);
+        this.attributeModifierManager = new AttributeModifierManager(plugin);
         this.chatInputManager = new ChatInputManager(plugin);
     }
 }

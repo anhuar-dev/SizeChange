@@ -106,7 +106,24 @@ public class PlaceholderHook extends PlaceholderExpansion {
             case "combat_remaining" -> {
                 return String.valueOf(plugin.getManagerHandler().getCombatTagManager().getRemainingSeconds(uuid));
             }
+            case "attribute_count" -> {
+                return String.valueOf(plugin.getManagerHandler().getAttributeModifierManager().count(uuid));
+            }
             default -> {
+                // %sizechange_attribute_<name>% -> the player's current effective
+                // value for that attribute (base + every modifier, ours included).
+                if (params.toLowerCase(Locale.ROOT).startsWith("attribute_")) {
+                    if (player == null) {
+                        return "";
+                    }
+                    var manager = plugin.getManagerHandler().getAttributeModifierManager();
+                    var attribute = manager.resolveAttribute(params.substring("attribute_".length()));
+                    if (attribute == null) {
+                        return "";
+                    }
+                    var instance = player.getAttribute(attribute);
+                    return instance == null ? "" : format(instance.getValue());
+                }
                 return null;
             }
         }

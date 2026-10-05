@@ -37,7 +37,9 @@ public class PlayerDataManager {
                 String uri = plugin.getSetting().getString("DATABASE.MONGODB.URI");
                 String dbName = plugin.getSetting().getString("DATABASE.MONGODB.DATABASE");
                 String collection = plugin.getSetting().getString("DATABASE.MONGODB.COLLECTION");
-                database = new MongoDB(plugin, uri, dbName, collection);
+                String attributesCollection = plugin.getSetting().getConfig()
+                        .getString("DATABASE.MONGODB.ATTRIBUTES-COLLECTION", "player_attributes");
+                database = new MongoDB(plugin, uri, dbName, collection, attributesCollection);
                 plugin.getLogger().info("Using MongoDB as the database");
             }
             case "SQLITE" -> {

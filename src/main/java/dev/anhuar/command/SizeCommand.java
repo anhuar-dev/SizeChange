@@ -173,6 +173,7 @@ public class SizeCommand {
                                             .requires(source -> source.getSender().hasPermission("sizechange.reload"))
                                             .executes(this::executeReload)
                             )
+                            .then(new AttributeCommand(plugin).node())
                             .build(),
                     "Comando principal del plugin Size"
             );
@@ -495,6 +496,7 @@ public class SizeCommand {
         int worlds = worldManager.getDenyWorlds().size() + worldManager.getSizeWorlds().size();
 
         int combatTagged = plugin.getManagerHandler().getCombatTagManager().activeCount();
+        int attributeModifiers = plugin.getManagerHandler().getAttributeModifierManager().activeCount();
 
         MessageUtil.sendMessage(sender, "info",
                 new MessageUtil.PlaceholderBuilder()
@@ -504,6 +506,7 @@ public class SizeCommand {
                         .add("regions", denyRegions + sizeRegions)
                         .add("worlds", worlds)
                         .add("combat", combatTagged)
+                        .add("attributes", attributeModifiers)
                         .build());
 
         return 1;
@@ -519,6 +522,7 @@ public class SizeCommand {
         plugin.getManagerHandler().getRegionManager().reloadDenyRegions();
         plugin.getManagerHandler().getWorldManager().reload();
         plugin.getManagerHandler().getCombatTagManager().reload();
+        plugin.getManagerHandler().getAttributeModifierManager().reload();
         DenyRegionHandler.reloadSizeRegions();
 
         MessageUtil.sendMessage(sender, "reload");

@@ -63,6 +63,24 @@ permissions:
   sizechange.reload:
     description: Reload the plugin's configuration
     default: op
+  sizechange.attribute.permanent.set:
+    description: Apply a permanent attribute modifier to a player
+    default: op
+  sizechange.attribute.permanent.clear:
+    description: Remove a player's permanent attribute modifier (and clearall)
+    default: op
+  sizechange.attribute.temporary.set:
+    description: Apply a timed attribute modifier to a player
+    default: op
+  sizechange.attribute.temporary.clear:
+    description: Remove a player's timed attribute modifier
+    default: op
+  sizechange.attribute.temporary.extend:
+    description: Extend the remaining time of a player's timed attribute modifier
+    default: op
+  sizechange.attribute.view:
+    description: List a player's attribute modifiers
+    default: op
   sizechange.bypass:
     description: Ignore DENY/SIZE region and world size overrides
     default: false

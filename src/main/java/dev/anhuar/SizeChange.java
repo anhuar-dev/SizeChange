@@ -78,6 +78,12 @@ public class SizeChange extends JavaPlugin {
         setupMetrics();
         setupPlaceholders();
 
+        // Re-apply attribute modifiers to anyone already online (matters only when
+        // the plugin is hot-loaded with players connected; a no-op on a normal
+        // startup). Regular joins go through PlayerListener.
+        getServer().getOnlinePlayers().forEach(player ->
+                managerHandler.getAttributeModifierManager().handleJoin(player));
+
         getLogger().info("Size plugin enabled successfully");
     }
 
@@ -95,6 +101,10 @@ public class SizeChange extends JavaPlugin {
                 () -> String.valueOf(setting.getConfig().getBoolean("ANIMATION.ENABLED", true))));
         metrics.addCustomChart(new SingleLineChart("active_temporary_sizes",
                 () -> managerHandler.getTemporarySizeManager().activeCount()));
+        metrics.addCustomChart(new SimplePie("attributes_enabled",
+                () -> String.valueOf(setting.getConfig().getBoolean("ATTRIBUTES.ENABLED", true))));
+        metrics.addCustomChart(new SingleLineChart("active_attribute_modifiers",
+                () -> managerHandler.getAttributeModifierManager().activeCount()));
     }
 
     private void setupPlaceholders() {
@@ -146,6 +156,9 @@ public class SizeChange extends JavaPlugin {
             }
             if (managerHandler.getCombatTagManager() != null) {
                 managerHandler.getCombatTagManager().shutdown();
+            }
+            if (managerHandler.getAttributeModifierManager() != null) {
+                managerHandler.getAttributeModifierManager().shutdown();
             }
             if (managerHandler.getSizeAnimator() != null) {
                 managerHandler.getSizeAnimator().shutdown();
